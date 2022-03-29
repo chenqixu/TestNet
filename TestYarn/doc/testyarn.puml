@@ -1,0 +1,15 @@
+@startuml
+TM.TA -> TM.AM: 启动应用管理器
+TM.AM --> RM: 申请资源
+RM --> TM.AM: 申请成功，返回NM
+TM.AM -> NM: 提交任务
+NM --> Container: 启动容器，执行任务
+Container --> TM.AM: 心跳反馈，完成反馈
+TM.AM --> RM: 释放资源
+RM -->NM: 通知Kill容器
+NM --> Container: Kill
+Container --> NM: 完成
+NM --> RM: 全局资源/队列资源释放
+RM --> TM.AM: 完成
+TM.AM --> TM.TA: 完成
+@enduml
