@@ -47,7 +47,7 @@ public class NodeManager {
 
     public Container submitTask(TaskBean taskBean) {
         // 和任务调度管理对接，接收任务参数，启动Container
-        logger.info("{} 接收到客户端的提交任务请求 {}", PREFIX, taskBean);
+        logger.info("{} 接收到客户端的提交任务请求 {}，启动Container", PREFIX, taskBean);
         // 启动容器
         Container container = new Container(taskBean);
         new Thread(container).start();
