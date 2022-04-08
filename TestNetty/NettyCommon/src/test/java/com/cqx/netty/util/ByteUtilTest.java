@@ -104,12 +104,44 @@ public class ByteUtilTest {
         return result;
     }
 
+    /**
+     * 无符号byte
+     *
+     * @param b
+     * @return
+     */
     public static String unsignedByte(byte b) {
-        byte[] unsignedInt1 = {0x00, b};
-        return parserUnsigned(unsignedInt1);
+        byte[] unsignedArray = {0x00, b};
+        return unsignedBytes(unsignedArray);
     }
 
-    public static String parserUnsigned(byte[] bytes) {
+    /**
+     * 无符号short
+     *
+     * @param val
+     * @return
+     */
+    public static String unsignedShort(short val) {
+        return String.valueOf(Short.toUnsignedInt(val));
+    }
+
+    /**
+     * 无符号int
+     *
+     * @param val
+     * @return
+     */
+    public static String unsignedInt(int val) {
+        return String.valueOf(Integer.toUnsignedLong(val));
+    }
+
+    /**
+     * 字节数组转无符号
+     *
+     * @param bytes
+     * @return
+     */
+    public static String unsignedBytes(byte[] bytes) {
         return new BigInteger(bytes).toString();
     }
 
@@ -279,19 +311,19 @@ public class ByteUtilTest {
 
         // 11111111
         byte[] unsignedInt1 = {0x00, (byte) -1};
-        System.out.println(parserUnsigned(unsignedInt1));
+        System.out.println(unsignedBytes(unsignedInt1));
 
         // 11111111 11111111
         byte[] unsignedInt2 = {0x00, (byte) -1, (byte) -1};
-        System.out.println(parserUnsigned(unsignedInt2));
+        System.out.println(unsignedBytes(unsignedInt2));
 
         // 11111111 11111111 11111111 11111111
         byte[] unsignedInt4 = {0x00, (byte) -1, (byte) -1, (byte) -1, (byte) -1};
-        System.out.println(parserUnsigned(unsignedInt4));
+        System.out.println(unsignedBytes(unsignedInt4));
 
         // 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
         byte[] unsignedInt8 = {0x00, (byte) -1, (byte) -1, (byte) -1, (byte) -1, (byte) -1, (byte) -1, (byte) -1, (byte) -1};
-        System.out.println(parserUnsigned(unsignedInt8));
+        System.out.println(unsignedBytes(unsignedInt8));
     }
 
     /**
@@ -331,7 +363,7 @@ public class ByteUtilTest {
                         byte[] bytes = new byte[8];
                         int readLen = fis.read(bytes, 0, fieldLen);
                         byte[] newBytes = arrayAdd(head, bytes, readLen);
-                        String value = parserUnsigned(newBytes);
+                        String value = unsignedBytes(newBytes);
 //                        System.out.println(value);
                     }
 //                    break;
@@ -427,5 +459,15 @@ public class ByteUtilTest {
         for (int i = 0; i < 64; i++) {
             System.out.print(0);
         }
+    }
+
+    @Test
+    public void mask() {
+        int mask = 0xFFFFFFFF << (32 - 8);
+        System.out.println("有符号：" + mask);
+        System.out.println("无符号：" + unsignedInt(mask));
+        String binaryString = Integer.toBinaryString(mask);
+        System.out.println("转二进制：" + binaryString);
+        System.out.println("二进制转十进制，使用Long来存储：" + Long.parseLong(binaryString, 2));
     }
 }
