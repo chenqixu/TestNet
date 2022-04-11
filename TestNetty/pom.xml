@@ -17,6 +17,7 @@
     <properties>
         <fastjson.version>1.2.31</fastjson.version>
         <!-- netty.version>3.9.9.Final</netty.version  -->
+        <!--<netty.version>4.1.32.Final</netty.version>-->
         <netty.version>5.0.0.Alpha2</netty.version>
         <slf4j.version>1.7.19</slf4j.version>
         <logback.version>1.0.13</logback.version>
@@ -42,6 +43,12 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
