@@ -16,9 +16,7 @@
 
     <properties>
         <fastjson.version>1.2.31</fastjson.version>
-        <!-- netty.version>3.9.9.Final</netty.version  -->
-        <!--<netty.version>4.1.32.Final</netty.version>-->
-        <netty.version>5.0.0.Alpha2</netty.version>
+        <netty.version>4.1.32.Final</netty.version>
         <slf4j.version>1.7.19</slf4j.version>
         <logback.version>1.0.13</logback.version>
     </properties>
@@ -26,7 +24,6 @@
         <!-- netty -->
         <dependency>
             <groupId>io.netty</groupId>
-            <!-- artifactId>netty</artifactId  -->
             <artifactId>netty-all</artifactId>
             <version>${netty.version}</version>
         </dependency>

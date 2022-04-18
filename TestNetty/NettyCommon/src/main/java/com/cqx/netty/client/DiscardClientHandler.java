@@ -36,7 +36,7 @@ public class DiscardClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 	}
 
 	@Override
-	protected void messageReceived(ChannelHandlerContext ctx, ByteBuf msg)
+	protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg)
 			throws Exception {
 		System.out.println("client channelRead..");
 		ByteBuf buf = msg.readBytes(msg.readableBytes());

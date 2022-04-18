@@ -22,8 +22,7 @@ import java.util.concurrent.TimeUnit;
  * @author chenqixu
  */
 public class IClient<T> {
-
-    private static Logger logger = LoggerFactory.getLogger(IClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(IClient.class);
     private String host;
     private int port;
     private IClientHandler<T> iClientHandler;

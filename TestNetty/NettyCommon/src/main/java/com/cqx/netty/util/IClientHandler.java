@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +17,8 @@ import java.util.concurrent.CountDownLatch;
  *
  * @author chenqixu
  */
-public abstract class IClientHandler<T> extends SimpleChannelInboundHandler<ByteBuf> {
-
-    private static Logger logger = LoggerFactory.getLogger(IClientHandler.class);
+public abstract class IClientHandler<T> extends ChannelInboundHandlerAdapter {
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
     private Map<String, String> params;
     private CountDownLatch latch;
     private T t;
@@ -74,15 +73,18 @@ public abstract class IClientHandler<T> extends SimpleChannelInboundHandler<Byte
      * @throws Exception
      */
     @Override
-    protected void messageReceived(ChannelHandlerContext ctx, ByteBuf msg)
-            throws Exception {
-//        logger.info("client channelRead..");
-        ByteBuf buf = msg.readBytes(msg.readableBytes());
-        logger.info("Client received:" + ByteBufUtil.hexDump(buf));
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        ByteBuf buf = (ByteBuf) msg; // (1)
+        try {
+            logger.info("Client received:" + ByteBufUtil.hexDump(buf));
 //        String result = buf.toString(Charset.forName("utf-8"));
 //        logger.info("Client received:" + ByteBufUtil.hexDump(buf) + "; The value is:" + result);
 //        this.queryResult.put(result);
-        dealResponse(buf);
+            dealResponse(buf);
+            ctx.close();
+        } finally {
+            buf.release();
+        }
     }
 
     /**

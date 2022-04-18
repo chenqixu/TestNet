@@ -21,7 +21,7 @@ public class MobileboxServer {
         IServer.newbuilder()
                 .setPort(port)
                 .setParams(params)
-                .setCls(MobileboxServerHandler.class)
+                .addSocketChannel(new MobileboxServerHandler())
                 .start();
     }
 

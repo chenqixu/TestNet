@@ -8,6 +8,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 
@@ -17,7 +18,7 @@ import io.netty.util.ReferenceCountUtil;
  * 然后你可以覆盖这些方法。 现在仅仅只需要继承ChannelHandlerAdapter类而不是你自己去实现接口方法。
  *
  */
-public class DiscardServerHandler extends ChannelHandlerAdapter {
+public class DiscardServerHandler extends ChannelInboundHandlerAdapter {
 	
 	private TaskPool taskPool;
 	
@@ -49,7 +50,7 @@ public class DiscardServerHandler extends ChannelHandlerAdapter {
 //            ReferenceCountUtil.release(msg);
 //        }
 //      System.out.println("server channelRead...; received:" + buf.toString(Charset.forName("utf-8")));
-    	ByteBuf buf = (ByteBuf)msg;
+    	ByteBuf buf = (ByteBuf) msg;
 		DiscardBean discardBean = new DiscardBean(buf);
 		System.out.println("Client received:" + buf + "; The value is:" + discardBean.toString());
 		/**
