@@ -23,7 +23,7 @@ public final class EchoClient {
     static final int SIZE = Integer.parseInt(System.getProperty("size", "256"));
 
     public static void main(String[] args) throws Exception {
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 10; i++) {
             EchoClient echoClient = new EchoClient();
             echoClient.send();
         }

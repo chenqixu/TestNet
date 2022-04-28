@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Handler implementation for the echo server.
@@ -20,16 +21,36 @@ public class EchoServerHandler extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(EchoServerHandler.class);
     private Random random = new Random();
     private AtomicBoolean isFirst = new AtomicBoolean(true);
+    private ThreadLocal<EchoBean> threadLocal;
+    private AtomicInteger echoID = new AtomicInteger(1);
+    private volatile SDTPLinkedQueue sdtpLinkedQueue;
+    private ThreadLocal<LinkedQueue> threadLocalLinkedQueue;
+
+    public EchoServerHandler(SDTPLinkedQueue sdtpLinkedQueue) {
+        this.sdtpLinkedQueue = sdtpLinkedQueue;
+        this.threadLocal = new ThreadLocal<EchoBean>() {
+            @Override
+            public EchoBean initialValue() {
+                return new EchoBean(echoID.getAndIncrement());
+            }
+        };
+        this.threadLocalLinkedQueue = new ThreadLocal<LinkedQueue>() {
+            @Override
+            public LinkedQueue initialValue() {
+                return sdtpLinkedQueue.next();
+            }
+        };
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf recv = (ByteBuf) msg;
         try {
             int len = recv.readableBytes();
-
             byte[] reads = new byte[len];
             recv.readBytes(reads);
-            logger.info(String.format("【channelRead】read.len: %s, read.msg: %s, ctx: %s", len, new String(reads), ctx));
+            logger.info(String.format("【channelRead】echoID: %s, LinkedQueue: %s, read.len: %s, read.msg: %s, ctx: %s"
+                    , threadLocal.get(), threadLocalLinkedQueue.get(),len, new String(reads), ctx));
             ByteBuf serverSend = Unpooled.buffer(1);
             // header : 1
             // body : EchoClient.SIZE

@@ -11,6 +11,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>NettyCommon</module>
+        <module>NettySDTP</module>
     </modules>
     <artifactId>TestNetty</artifactId>
 
@@ -74,6 +75,14 @@
             <artifactId>junit</artifactId>
             <version>4.11</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- apache.commons -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.4</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
     <build>

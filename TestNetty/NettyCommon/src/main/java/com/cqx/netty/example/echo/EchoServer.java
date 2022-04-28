@@ -32,7 +32,8 @@ public final class EchoServer {
         // Configure the server.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup(3);
-        final EchoServerHandler serverHandler = new EchoServerHandler();
+        final SDTPLinkedQueue sdtpLinkedQueue = new SDTPLinkedQueue(3);
+        final EchoServerHandler serverHandler = new EchoServerHandler(sdtpLinkedQueue);
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
