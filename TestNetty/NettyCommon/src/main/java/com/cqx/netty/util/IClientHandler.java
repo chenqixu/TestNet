@@ -27,11 +27,16 @@ public abstract class IClientHandler<T> extends ChannelInboundHandlerAdapter {
         return Unpooled.copiedBuffer("Netty rocks!", CharsetUtil.UTF_8);
     }
 
-    protected ByteBuf sendRequest() {
+    protected ByteBuf sendChannelActiveRequest() {
         return defaultRequest();
     }
 
-    protected abstract void dealResponse(ByteBuf buf);
+    protected void dealResponse(ByteBuf buf) {
+    }
+
+    protected ByteBuf channelReadSend() {
+        return null;
+    }
 
     protected String getParams(String key) {
         return this.params.get(key);
@@ -62,7 +67,7 @@ public abstract class IClientHandler<T> extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.info("client channelActive..");
-        ctx.writeAndFlush(sendRequest());
+        ctx.writeAndFlush(sendChannelActiveRequest());
     }
 
     /**
@@ -76,11 +81,12 @@ public abstract class IClientHandler<T> extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf buf = (ByteBuf) msg; // (1)
         try {
-            logger.info("Client received:" + ByteBufUtil.hexDump(buf));
-//        String result = buf.toString(Charset.forName("utf-8"));
-//        logger.info("Client received:" + ByteBufUtil.hexDump(buf) + "; The value is:" + result);
-//        this.queryResult.put(result);
+            logger.debug("Client received:" + ByteBufUtil.hexDump(buf));
             dealResponse(buf);
+            ByteBuf send = channelReadSend();
+            if (send != null) {
+                ctx.writeAndFlush(send.array());
+            }
             ctx.close();
         } finally {
             buf.release();

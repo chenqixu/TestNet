@@ -15,6 +15,11 @@ public class N0DefaultValue extends FDefaultValue {
     }
 
     @Override
+    public byte[] getDefaultByteValue(int size) {
+        return getEmptyByte(size, 0);
+    }
+
+    @Override
     public String getName() {
         return "N0";
     }

@@ -8,6 +8,10 @@ package com.cqx.netty.sdtp.rule;
 public interface IDefaultValue {
     boolean isNull(byte[] data);
 
+    boolean isNull(String data);
+
+    byte[] getDefaultByteValue(int size);
+
     String getDefaultValue();
 
     String getName();

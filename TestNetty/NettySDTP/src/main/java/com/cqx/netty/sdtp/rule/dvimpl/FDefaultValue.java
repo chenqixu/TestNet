@@ -45,6 +45,41 @@ public class FDefaultValue implements IDefaultValue {
     }
 
     @Override
+    public boolean isNull(String data) {
+        return data == null || data.trim().length() == 0;
+    }
+
+    @Override
+    public byte[] getDefaultByteValue(int size) {
+        if (size == 1) {
+            return Constant.BYTE1_DEFAULT;
+        } else if (size == 2) {
+            return Constant.BYTE2_DEFAULT;
+        } else if (size == 4) {
+            return Constant.BYTE4_DEFAULT;
+        } else if (size == 8) {
+            return Constant.BYTE8_DEFAULT;
+        } else if (size == 16) {
+            return Constant.BYTE16_DEFAULT;
+        } else if (size == 32) {
+            return Constant.BYTE32_DEFAULT;
+        } else if (size == 44) {
+            return Constant.BYTE44_DEFAULT;
+        } else if (size == 55) {
+            return Constant.BYTE55_DEFAULT;
+        } else if (size == 64) {
+            return Constant.BYTE64_DEFAULT;
+        } else if (size == 128) {
+            return Constant.BYTE128_DEFAULT;
+        } else if (size == 256) {
+            return Constant.BYTE256_DEFAULT;
+        } else {
+            // 针对可变长度字段判断
+            return getEmptyByte(size);
+        }
+    }
+
+    @Override
     public String getDefaultValue() {
         return Constant.EMPTY_STRING;
     }
@@ -65,6 +100,15 @@ public class FDefaultValue implements IDefaultValue {
         for (int i = 0; i < size; i++) {
             BYTE_DEFAULT[i] = (byte) 0xff;
         }
+        return BYTE_DEFAULT;
+    }
+
+    public final byte[] getEmptyByte(int size, int value) {
+        byte[] BYTE_DEFAULT = new byte[size];
+        for (int i = 0; i < size - 1; i++) {
+            BYTE_DEFAULT[i] = (byte) 0xff;
+        }
+        BYTE_DEFAULT[size - 1] = (byte) value;
         return BYTE_DEFAULT;
     }
 }

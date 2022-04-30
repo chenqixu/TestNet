@@ -103,9 +103,6 @@ public class UtilsTest {
     }
 
     class TestIServerHandler extends IServerHandler {
-        @Override
-        protected void init() {
-        }
 
         @Override
         protected ByteBuf dealHandler(ByteBuf buf) {

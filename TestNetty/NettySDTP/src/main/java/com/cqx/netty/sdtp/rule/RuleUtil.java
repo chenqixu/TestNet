@@ -54,6 +54,9 @@ public class RuleUtil {
 
     public List<RuleBean> generateRule(String rule) {
         List<RuleBean> ruleBeanList = new ArrayList<>();
+        if (rule == null || rule.trim().length() == 0) {
+            return ruleBeanList;
+        }
         String[] ruleArray = rule.split(",", -1);
         for (String singleRule : ruleArray) {
             String[] singleRuleArray = singleRule.split("-", -1);
@@ -82,7 +85,7 @@ public class RuleUtil {
             }
             ruleBean.setRule(iRuleMap.get(parserRule));
             ruleBean.setDefaultValue(iDefaultValueMap.get(defaultValueRule));
-            logger.info("{}", ruleBean);
+            logger.debug("{}", ruleBean);
             check(ruleBean);
             ruleBeanList.add(ruleBean);
         }
@@ -125,13 +128,20 @@ public class RuleUtil {
             }
             // 如果有长度
             if (ruleBean.getReadlen() > 0) {
-                // 根据长度，把数据读到数组
-                byte[] data = new byte[ruleBean.getReadlen()];
-                byteBuf.readBytes(data);
-                // 根据对应类型进行处理
-                String ret = ruleBean.getRule().read(data, ruleBean.getDefaultValue());
-                stringBuilder.append(ret).append(Constant.OUTPUT_SEPARATOR);
-                map.put(ruleBean.getFieldName(), ret);
+                try {
+                    // 根据长度，把数据读到数组
+                    byte[] data = new byte[ruleBean.getReadlen()];
+                    byteBuf.readBytes(data);
+                    // 根据对应类型进行处理
+                    String ret = ruleBean.getRule().read(data, ruleBean.getDefaultValue());
+                    stringBuilder.append(ret).append(Constant.OUTPUT_SEPARATOR);
+                    map.put(ruleBean.getFieldName(), ret);
+//                    logger.info("FieldName: {}, ret: {}, data: {}", ruleBean.getFieldName(), ret, Arrays.toString(data));
+                } catch (Exception e) {
+                    String errorMessge = String.format("解析异常，规则: %s，异常信息: %s", ruleBean, e.getMessage());
+                    logger.error(errorMessge, e);
+                    throw e;
+                }
             }
         }
         return stringBuilder.toString();
@@ -145,13 +155,13 @@ public class RuleUtil {
      * @return
      */
     public byte[] reverse(List<RuleBean> ruleBeanList, String[] values) {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(32 * 2048);
         for (int i = 0; i < ruleBeanList.size(); i++) {
             RuleBean rb = ruleBeanList.get(i);
             String tmp = values[i];
             byte[] tmpBytes;
             try {
-                tmpBytes = rb.getRule().reverse(tmp);
+                tmpBytes = rb.getRule().reverse(tmp, rb.getDefaultValue(), rb.getReadlen());
             } catch (Exception e) {
                 String errorMessge = String.format("逆向解析异常，规则: %s，数据: %s，异常信息: %s", rb, tmp, e.getMessage());
                 logger.error(errorMessge, e);
@@ -161,7 +171,10 @@ public class RuleUtil {
                 // 计算内容长度并按2字节写入
                 byteBuffer.putShort((short) tmpBytes.length);
             }
-            if (tmpBytes != null) byteBuffer.put(tmpBytes);
+//            logger.info("FieldName: {}, tmpBytes: {}", rb.getFieldName(), Arrays.toString(tmpBytes));
+            if (tmpBytes != null) {
+                byteBuffer.put(tmpBytes);
+            }
         }
         int size = byteBuffer.position();
         byteBuffer.flip();

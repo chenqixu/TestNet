@@ -5,25 +5,28 @@ import com.cqx.netty.sdtp.rule.IDefaultValue;
 import com.cqx.netty.util.ByteUtil;
 
 /**
- * TBCD规则
+ * 16进制
  *
  * @author chenqixu
  */
 @AnnoRule
-public class TbcdRule extends ByteRule {
+public class HexRule extends ByteRule {
     @Override
     protected String parser(byte[] data) {
-        // TBCD解码
-        return ByteUtil.getTBCD(data, data.length);
+        return ByteUtil.bytesToHexStringH(data);
     }
 
     @Override
     public byte[] reverse(String data, IDefaultValue iDefaultValue, int size) {
-        return null;
+        // 先判断是否为空，为空就走默认值
+        if (iDefaultValue.isNull(data)) {
+            return iDefaultValue.getDefaultByteValue(size);
+        }
+        return ByteUtil.hexStringToBytes(data);
     }
 
     @Override
     public String getName() {
-        return "tbcd";
+        return "hex";
     }
 }

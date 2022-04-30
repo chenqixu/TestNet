@@ -1,6 +1,9 @@
 package com.cqx.netty.service.redis;
 
 import com.cqx.netty.util.IServer;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.SocketChannel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,11 +21,18 @@ public class MobileboxServer {
 
     public void start(int port) throws Exception {
         Map<String, String> params = new HashMap<>();
-        IServer.newbuilder()
-                .setPort(port)
+        IServer iServer = IServer.newbuilder();
+        iServer.setPort(port)
                 .setParams(params)
-                .addSocketChannel(new MobileboxServerHandler())
-                .start();
+                .buildBootstrap()
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    public void initChannel(SocketChannel ch) {
+                        ChannelPipeline p = ch.pipeline();
+                        p.addLast("MobileboxServer", new MobileboxServerHandler());
+                    }
+                });
+        iServer.start();
     }
 
 }

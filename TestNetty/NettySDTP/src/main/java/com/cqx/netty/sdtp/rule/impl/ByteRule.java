@@ -25,8 +25,29 @@ public class ByteRule implements IRule {
     }
 
     @Override
-    public byte[] reverse(String data) {
-        return new BigInteger(data).toByteArray();
+    public byte[] reverse(String data, IDefaultValue iDefaultValue, int size) {
+        // 先判断是否为空，为空就走默认值
+        if (iDefaultValue.isNull(data)) {
+            return iDefaultValue.getDefaultByteValue(size);
+        }
+        byte[] bytes = new BigInteger(data).toByteArray();
+        if (size > bytes.length) {
+            int diff = size - bytes.length;
+            byte[] newbytes = new byte[diff];
+            for (int i = 0; i < diff; i++) {
+                newbytes[i] = 0x00;
+            }
+            bytes = ByteUtil.arrayAdd(newbytes, bytes, bytes.length);
+        } else if (bytes.length > size) {
+            // 取低位
+            int diff = bytes.length - size;
+            byte[] newbytes = new byte[size];
+            for (int i = diff, j = 0; i < bytes.length; i++, j++) {
+                newbytes[j] = bytes[i];
+            }
+            bytes = newbytes;
+        }
+        return bytes;
     }
 
     protected String parser(byte[] data) {

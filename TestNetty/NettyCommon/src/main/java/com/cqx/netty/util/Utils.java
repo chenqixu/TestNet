@@ -118,7 +118,7 @@ public class Utils {
                     break;
                 case "java.lang.Integer":
                     //带参构造
-                    t = constructor.newInstance(String.valueOf(((Number) value).intValue()));
+                    t = constructor.newInstance((String) value);
                     break;
                 case "java.lang.String":
                     t = constructor.newInstance((String) value);

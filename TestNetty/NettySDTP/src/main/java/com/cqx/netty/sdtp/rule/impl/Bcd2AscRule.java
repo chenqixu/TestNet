@@ -1,6 +1,7 @@
 package com.cqx.netty.sdtp.rule.impl;
 
 import com.cqx.netty.sdtp.rule.AnnoRule;
+import com.cqx.netty.sdtp.rule.IDefaultValue;
 import com.cqx.netty.util.ByteUtil;
 
 /**
@@ -17,7 +18,7 @@ public class Bcd2AscRule extends ByteRule {
     }
 
     @Override
-    public byte[] reverse(String data) {
+    public byte[] reverse(String data, IDefaultValue iDefaultValue, int size) {
         return null;
     }
 

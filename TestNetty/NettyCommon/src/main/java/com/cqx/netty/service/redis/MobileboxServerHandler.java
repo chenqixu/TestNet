@@ -11,11 +11,9 @@ import io.netty.buffer.ByteBuf;
  * @author chenqixu
  */
 public class MobileboxServerHandler extends IServerHandler {
+    private MemoryCache memoryCache;
 
-    MemoryCache memoryCache;
-
-    @Override
-    protected void init() {
+    public MobileboxServerHandler() {
         memoryCache = new MemoryCache();
         memoryCache.init();
     }

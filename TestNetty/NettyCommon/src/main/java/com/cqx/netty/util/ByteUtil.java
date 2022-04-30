@@ -102,18 +102,28 @@ public class ByteUtil {
         return l;
     }
 
-    /**
-     * int到byte[] 由高位到低位
-     *
-     * @param i 需要转换为byte数组的整行值。
-     * @return byte数组
-     */
-    public static byte[] intToByteArray(int i) {
+    public static byte[] longTo4ByteArray(long i) {
         byte[] result = new byte[4];
         result[0] = (byte) ((i >> 24) & 0xFF);
         result[1] = (byte) ((i >> 16) & 0xFF);
         result[2] = (byte) ((i >> 8) & 0xFF);
         result[3] = (byte) (i & 0xFF);
+        return result;
+    }
+
+    public static byte[] intTo4ByteArray(int i) {
+        byte[] result = new byte[4];
+        result[0] = (byte) ((i >> 24) & 0xFF);
+        result[1] = (byte) ((i >> 16) & 0xFF);
+        result[2] = (byte) ((i >> 8) & 0xFF);
+        result[3] = (byte) (i & 0xFF);
+        return result;
+    }
+
+    public static byte[] intTo2ByteArray(int i) {
+        byte[] result = new byte[2];
+        result[0] = (byte) ((i >> 8) & 0xFF);
+        result[1] = (byte) (i & 0xFF);
         return result;
     }
 
@@ -311,6 +321,37 @@ public class ByteUtil {
         short s = (short) (((short) bytes[0] << 8) & 0xFF00);
         s |= bytes[1] & 0xFF;
         return s;
+    }
+
+    /**
+     * Convert hex string to byte[]
+     *
+     * @param hexString the hex string
+     * @return byte[]
+     */
+    public static byte[] hexStringToBytes(String hexString) {
+        if (hexString == null || hexString.equals("")) {
+            return null;
+        }
+        hexString = hexString.toUpperCase();
+        int length = hexString.length() / 2;
+        char[] hexChars = hexString.toCharArray();
+        byte[] d = new byte[length];
+        for (int i = 0; i < length; i++) {
+            int pos = i * 2;
+            d[i] = (byte) (charToByte(hexChars[pos]) << 4 | charToByte(hexChars[pos + 1]));
+        }
+        return d;
+    }
+
+    /**
+     * Convert char to byte
+     *
+     * @param c char
+     * @return byte
+     */
+    private static byte charToByte(char c) {
+        return (byte) "0123456789ABCDEF".indexOf(c);
     }
 
     public static synchronized String bytesToHexStringH(byte[] bytes) {

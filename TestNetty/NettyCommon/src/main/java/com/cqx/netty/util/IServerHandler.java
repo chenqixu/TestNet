@@ -2,13 +2,15 @@ package com.cqx.netty.util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 公共服务处理接口
@@ -17,12 +19,8 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    public IServerHandler() {
-        init();
-    }
-
-    protected abstract void init();
+    private Map<String, String> params = new HashMap<>();
+    private boolean isClose = false;
 
     protected abstract ByteBuf dealHandler(ByteBuf buf);
 
@@ -32,7 +30,7 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
      * @param msg
      * @return
      */
-    public ByteBuf strToByteBuf(String msg) {
+    protected ByteBuf strToByteBuf(String msg) {
         return Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
     }
 
@@ -46,19 +44,23 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf buf = (ByteBuf) msg;
-        logger.info("Client received:" + buf);
-        /**
-         * 解析包类型，分别处理
-         */
-        ByteBuf result = dealHandler(buf);
-        if (result != null) {
-            logger.info("返回结果给客户端:" + result);
-            // 返回结果给客户端
-            ctx.write(result);
-        } else {
-            logger.info("抛弃收到的数据");
-            // 抛弃收到的数据
-            ReferenceCountUtil.release(msg);
+        logger.debug("Server received:" + buf);
+        try {
+            /**
+             * 解析包类型，分别处理
+             */
+            ByteBuf result = dealHandler(buf);
+            if (result != null) {
+                logger.debug("返回结果给客户端:" + result);
+                // 返回结果给客户端，并刷新缓冲
+                ctx.writeAndFlush(result);
+//                ctx.write(result);
+            } else {
+                logger.debug("不返回结果给客户端");
+            }
+        } finally {
+            // 释放
+            ReferenceCountUtil.release(buf);
         }
     }
 
@@ -70,11 +72,19 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        logger.info("server channelReadComplete..");
+        logger.debug("server channelReadComplete..");
         // 第一种方法：写一个空的buf，并刷新写出区域。完成后关闭sock channel连接。
-        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        //ctx.flush(); // 第二种方法：在client端关闭channel连接，这样的话，会触发两次channelReadComplete方法。
-        //ctx.flush().close().sync(); // 第三种：改成这种写法也可以，但是这种写法，没有第一种方法的好。
+//        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        // 第二种方法：在client端关闭channel连接，这样的话，会触发两次channelReadComplete方法。
+//        ctx.flush();
+        // 第三种：改成这种写法也可以，但是这种写法，没有第一种方法的好。
+//        ctx.flush().close().sync();
+        if (this.isClose) {
+            ctx.close().sync();
+        } else {
+            super.channelReadComplete(ctx);
+//            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
+        }
     }
 
     /***
@@ -94,5 +104,12 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
         // 出现异常就关闭
         cause.printStackTrace();
         ctx.close();
+    }
+
+    /**
+     * 关闭客户端
+     */
+    protected void closeClient() {
+        this.isClose = true;
     }
 }

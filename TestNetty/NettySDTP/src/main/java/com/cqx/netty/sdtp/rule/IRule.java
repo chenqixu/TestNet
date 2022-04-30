@@ -8,7 +8,7 @@ package com.cqx.netty.sdtp.rule;
 public interface IRule {
     String read(byte[] data, IDefaultValue iDefaultValue);
 
-    byte[] reverse(String data);
+    byte[] reverse(String data, IDefaultValue iDefaultValue, int size);
 
     String getName();
 }

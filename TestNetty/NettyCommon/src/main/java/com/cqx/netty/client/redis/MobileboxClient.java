@@ -20,9 +20,9 @@ public class MobileboxClient {
         iClient = IClient.newbuilder()
                 .setHost(host)
                 .setPort(port)
-                .setiClientHandler(new IClientHandler() {
+                .setiClientHandler(new IClientHandler<String>() {
                     @Override
-                    protected ByteBuf sendRequest() {
+                    protected ByteBuf sendChannelActiveRequest() {
                         String id = getParams("id");
                         ByteBuf byteBuf = MobileboxBean.newbuilder().setHead(1).setBody(id.getBytes()).serialize();
                         return byteBuf;
