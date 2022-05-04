@@ -37,6 +37,10 @@ public class SDTPnotifyXDRData implements SDTPBody {
 
     @Override
     public int length() {
+        // xdr_type 1, length 2, load length
+        // 在client的规则要去掉开头的Length
+        // 在server的规则中要体现
+        // 特别注意：这里的LoadLength是不含自身2个字节的
         return 3 + getLoad().length;
     }
 

@@ -354,11 +354,11 @@ public class ByteUtil {
         return (byte) "0123456789ABCDEF".indexOf(c);
     }
 
-    public static synchronized String bytesToHexStringH(byte[] bytes) {
-        return bytesToHexStringH(bytes, (String) null);
+    public static String bytesToHexStringH(byte[] bytes) {
+        return bytesToHexStringH(bytes, null);
     }
 
-    public static synchronized String bytesToHexStringH(byte[] bytes, String separator) {
+    public static String bytesToHexStringH(byte[] bytes, String separator) {
         if (ArrayUtils.isEmpty(bytes)) {
             return null;
         } else {
