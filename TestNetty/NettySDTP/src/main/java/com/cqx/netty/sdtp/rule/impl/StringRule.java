@@ -1,7 +1,6 @@
 package com.cqx.netty.sdtp.rule.impl;
 
 import com.cqx.netty.sdtp.rule.AnnoRule;
-import com.cqx.netty.sdtp.rule.IDefaultValue;
 
 import java.nio.charset.StandardCharsets;
 
@@ -19,11 +18,7 @@ public class StringRule extends ByteRule {
     }
 
     @Override
-    public byte[] reverse(String data, IDefaultValue iDefaultValue, int size) {
-        // 先判断是否为空，为空就走默认值
-        if (iDefaultValue.isNull(data)) {
-            return iDefaultValue.getDefaultByteValue(size);
-        }
+    protected byte[] unParser(String data, int size) {
         return data.getBytes(StandardCharsets.UTF_8);
     }
 

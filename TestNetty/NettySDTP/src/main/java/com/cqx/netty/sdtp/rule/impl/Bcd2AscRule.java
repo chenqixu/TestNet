@@ -18,8 +18,8 @@ public class Bcd2AscRule extends ByteRule {
     }
 
     @Override
-    public byte[] reverse(String data, IDefaultValue iDefaultValue, int size) {
-        return null;
+    protected byte[] unParser(String data, int size) {
+        throw new UnsupportedOperationException("不支持BCD转ASC的反向操作！");
     }
 
     @Override

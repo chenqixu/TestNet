@@ -30,6 +30,14 @@ public class ByteRule implements IRule {
         if (iDefaultValue.isNull(data)) {
             return iDefaultValue.getDefaultByteValue(size);
         }
+        return unParser(data, size);
+    }
+
+    protected String parser(byte[] data) {
+        return ByteUtil.unsignedBytes(data);
+    }
+
+    protected byte[] unParser(String data, int size) {
         byte[] bytes = new BigInteger(data).toByteArray();
         if (size > bytes.length) {
             int diff = size - bytes.length;
@@ -48,10 +56,6 @@ public class ByteRule implements IRule {
             bytes = newbytes;
         }
         return bytes;
-    }
-
-    protected String parser(byte[] data) {
-        return ByteUtil.unsignedBytes(data);
     }
 
     @Override

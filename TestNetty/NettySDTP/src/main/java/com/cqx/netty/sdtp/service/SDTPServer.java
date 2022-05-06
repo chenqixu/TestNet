@@ -46,8 +46,10 @@ public class SDTPServer {
     private String filePath;
     private int port;
     private boolean isWrite = false;
+    private boolean isWriteSingle = true;
     private boolean isParser = false;
     private int parallel_num = 1;
+    private int queue_limit;
     private Map<String, String> params = new HashMap<>();
     private AtomicInteger fileNum = new AtomicInteger(1);
 
@@ -57,26 +59,42 @@ public class SDTPServer {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
-            System.out.println("参数个数不足！需要两个参数");
+            System.out.println("参数个数不足！至少需要两个参数");
             System.exit(-1);
         }
+        // 文件路径
         String filePath = args[0];
+        // 服务端口
         int port = Integer.valueOf(args[1]);
+        // wordGroup的个数
         String work_num = "1";
         if (args.length >= 3) {
             work_num = args[2];
         }
+        // true:写 / false:不写
         boolean isWrite = false;
         if (args.length >= 4) {
             isWrite = Boolean.valueOf(args[3]);
         }
+        // true:解析 / false:不解析
         boolean isParser = false;
         if (args.length >= 5) {
             isParser = Boolean.valueOf(args[4]);
         }
+        // 解析个数
         int parallel_num = 1;
         if (args.length >= 6) {
             parallel_num = Integer.valueOf(args[5]);
+        }
+        // true:一个写 / false:并发写
+        boolean isWriteSingle = true;
+        if (args.length >= 7) {
+            isWriteSingle = Boolean.valueOf(args[6]);
+        }
+        // 队列上限
+        int queue_limit = 50000;
+        if (args.length >= 8) {
+            queue_limit = Integer.valueOf(args[7]);
         }
 
         SDTPServer sdtpServer = new SDTPServer();
@@ -84,8 +102,10 @@ public class SDTPServer {
         sdtpServer.setPort(port);
         sdtpServer.addParam(NetConstant.workerGroup_nThreads, work_num);
         sdtpServer.setWrite(isWrite);
+        sdtpServer.setWriteSingle(isWriteSingle);
         sdtpServer.setParser(isParser);
         sdtpServer.setParallel_num(parallel_num);
+        sdtpServer.setQueue_limit(queue_limit);
         sdtpServer.startServer();
     }
 
@@ -132,7 +152,16 @@ public class SDTPServer {
         this.parallel_num = parallel_num;
     }
 
+    public void setWriteSingle(boolean writeSingle) {
+        isWriteSingle = writeSingle;
+    }
+
+    public void setQueue_limit(int queue_limit) {
+        this.queue_limit = queue_limit;
+    }
+
     class SDTPServerHandler extends IServerHandler {
+        final Object wirteLock = new Object();
         RuleUtil xdrRuleUtil;
         List<RuleBean> xdrRuleBeanList;
         RuleUtil noLengthXdrRuleUtil;
@@ -141,7 +170,6 @@ public class SDTPServer {
         long count = 0L;
         LinkedBlockingQueue<byte[]> queue;
         volatile boolean parallel_close = false;
-
         // linkRel_Resp：连接释放应答
         MessageUtil<SDTPlinkRel_Resp> linkRel_Resp = new MessageUtil<>(SDTPlinkRel_Resp.class);
         // XDR数据通知应答
@@ -150,14 +178,6 @@ public class SDTPServer {
         MessageUtil<SDTPXDRRawDataSend_Resp> XDRRawDataSend_Resp = new MessageUtil<>(SDTPXDRRawDataSend_Resp.class);
 
         SDTPServerHandler(String xdrRule, String noLengthXdrRule) {
-            if (parallel_num == 1) {
-                this.fileUtil = new FileUtil();
-                try {
-                    this.fileUtil.createFile(filePath + fileNum.getAndIncrement(), "UTF-8");
-                } catch (FileNotFoundException | UnsupportedEncodingException e) {
-                    logger.error(e.getMessage(), e);
-                }
-            }
             this.xdrRuleUtil = new RuleUtil();
             this.xdrRuleBeanList = xdrRuleUtil.generateRule(xdrRule);
             this.noLengthXdrRuleUtil = new RuleUtil();
@@ -165,8 +185,28 @@ public class SDTPServer {
             this.linkRel_Resp.append(new byte[]{0x01});
             this.notifyXDRData_Resp.append(new byte[]{0x01});
             this.XDRRawDataSend_Resp.append(new byte[]{0x01});
-            this.queue = new LinkedBlockingQueue<>(100000);
-            if (parallel_num > 1) {
+            this.queue = new LinkedBlockingQueue<>(queue_limit);
+            if (isWriteSingle) {
+                // 一个通道一个写
+                initChanelToWrite();
+            } else {
+                // 一个通道并发写，几个并发就几个写
+                initChanelToWriteParallel();
+            }
+        }
+
+        /**
+         * 一个通道并发写，几个并发就几个写
+         */
+        void initChanelToWriteParallel() {
+            if (parallel_num == 1) {
+                this.fileUtil = new FileUtil();
+                try {
+                    this.fileUtil.createFile(filePath + fileNum.getAndIncrement(), "UTF-8");
+                } catch (FileNotFoundException | UnsupportedEncodingException e) {
+                    logger.error(e.getMessage(), e);
+                }
+            } else if (parallel_num > 1) {
                 ThreadTool threadTool = new ThreadTool(parallel_num);
                 for (int i = 0; i < parallel_num; i++) {
                     threadTool.addTask(new Runnable() {
@@ -198,6 +238,50 @@ public class SDTPServer {
                                 SleepUtil.sleepMilliSecond(1);
                             }
                             fileUtil.closeWrite();
+                        }
+                    });
+                }
+                threadTool.startTaskNotWait();
+            }
+        }
+
+        /**
+         * 一个通道一个写
+         */
+        void initChanelToWrite() {
+            this.fileUtil = new FileUtil();
+            try {
+                this.fileUtil.createFile(filePath + fileNum.getAndIncrement(), "UTF-8");
+            } catch (FileNotFoundException | UnsupportedEncodingException e) {
+                logger.error(e.getMessage(), e);
+            }
+            if (parallel_num > 1) {
+                ThreadTool threadTool = new ThreadTool(parallel_num);
+                for (int i = 0; i < parallel_num; i++) {
+                    threadTool.addTask(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (true) {
+                                byte[] datas;
+                                while ((datas = queue.poll()) != null) {
+                                    // 解析数据
+                                    ByteBuf byteBuf = Unpooled.buffer(datas.length);
+                                    byteBuf.writeBytes(datas);
+                                    String ret = noLengthXdrRuleUtil.parser(noLengthXdrRuleBeanList, byteBuf);
+                                    logger.debug("ret: {}", ret);
+                                    after.mark(ret.getBytes().length);
+                                    if (isWrite) {
+                                        synchronized (wirteLock) {
+                                            fileUtil.write(ret);
+                                            fileUtil.newline();
+                                        }
+                                    }
+                                }
+                                if (parallel_close) {
+                                    break;
+                                }
+                                SleepUtil.sleepMilliSecond(1);
+                            }
                         }
                     });
                 }

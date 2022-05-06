@@ -17,11 +17,7 @@ public class HexRule extends ByteRule {
     }
 
     @Override
-    public byte[] reverse(String data, IDefaultValue iDefaultValue, int size) {
-        // 先判断是否为空，为空就走默认值
-        if (iDefaultValue.isNull(data)) {
-            return iDefaultValue.getDefaultByteValue(size);
-        }
+    protected byte[] unParser(String data, int size) {
         return ByteUtil.hexStringToBytes(data);
     }
 

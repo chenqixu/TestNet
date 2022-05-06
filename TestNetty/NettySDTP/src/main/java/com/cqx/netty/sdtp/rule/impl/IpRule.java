@@ -1,7 +1,6 @@
 package com.cqx.netty.sdtp.rule.impl;
 
 import com.cqx.netty.sdtp.rule.AnnoRule;
-import com.cqx.netty.sdtp.rule.IDefaultValue;
 import com.cqx.netty.util.ByteUtil;
 
 import java.net.InetAddress;
@@ -50,11 +49,7 @@ public class IpRule extends ByteRule {
     }
 
     @Override
-    public byte[] reverse(String data, IDefaultValue iDefaultValue, int size) {
-        // 先判断是否为空，为空就走默认值
-        if (iDefaultValue.isNull(data)) {
-            return iDefaultValue.getDefaultByteValue(size);
-        }
+    protected byte[] unParser(String data, int size) {
         try {
             return InetAddress.getByName(data).getAddress();
         } catch (UnknownHostException e) {
