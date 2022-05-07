@@ -53,7 +53,7 @@ public class SDTPnotifyXDRData implements SDTPBody {
     public void setData(byte[] bytes) {
         if (bytes.length > 0) {
             this.Load = bytes;
-            this.LoadLength = ByteUtil.intTo2ByteArray(Load.length);
+            this.LoadLength = ByteUtil.intTo2ByteArray(length() - 1);
         } else {
             throw new NullPointerException("传入的数据为空！");
         }

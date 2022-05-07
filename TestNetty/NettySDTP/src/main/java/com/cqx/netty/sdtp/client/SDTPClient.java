@@ -81,6 +81,7 @@ public class SDTPClient {
                 notifyXDRData.append(httpData);
             }
             byte[] bytes = notifyXDRData.getMessage();
+            logger.info("发送的XDR数据的原始数据长度：{}", bytes.length);
             for (int i = 0; i < sendCnt; i++) {
                 socketClient.send(bytes);
                 socketClient.receive(clientReceive);
@@ -89,7 +90,9 @@ public class SDTPClient {
             // 发送链接释放请求
             MessageUtil<SDTPlinkRel_Req> linkRel = new MessageUtil<>(SDTPlinkRel_Req.class);
             linkRel.append(new byte[]{0x01});
-            socketClient.send(linkRel.getMessage());
+            byte[] relBytes = linkRel.getMessage();
+            logger.info("发送的链接释放请求的原始数据长度：{}", relBytes.length);
+            socketClient.send(relBytes);
             socketClient.receive(clientReceive);
         }
     }

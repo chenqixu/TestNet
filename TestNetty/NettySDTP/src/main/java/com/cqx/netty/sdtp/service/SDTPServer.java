@@ -331,8 +331,9 @@ public class SDTPServer {
                                 } else {
                                     // 解析数据
                                     ret = xdrRuleUtil.parser(xdrRuleBeanList, buf);
-                                    logger.debug("xdrType: {}, ret: {}", xdrType, ret);
-                                    after.mark(ret.getBytes().length);
+                                    int retLen = ret.getBytes().length;
+                                    logger.debug("xdrType: {}, ret: {}，retLen：{}", xdrType, ret, retLen);
+                                    after.mark(retLen);
                                     if (isWrite) {
                                         fileUtil.write(ret);
                                         fileUtil.newline();
