@@ -4,6 +4,7 @@ import com.codahale.metrics.Meter;
 import com.cqx.common.metric.MetricUtils;
 import com.cqx.common.utils.file.FileUtil;
 import com.cqx.common.utils.system.SleepUtil;
+import com.cqx.common.utils.thread.BaseRunable;
 import com.cqx.common.utils.thread.ThreadTool;
 import com.cqx.netty.sdtp.bean.EnumMessageType;
 import com.cqx.netty.sdtp.bean.SDTPXDRRawDataSend_Resp;
@@ -17,8 +18,7 @@ import com.cqx.netty.util.IServerHandler;
 import com.cqx.netty.util.NetConstant;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
@@ -176,6 +176,7 @@ public class SDTPServer {
         MessageUtil<SDTPnotifyXDRData_Resp> notifyXDRData_Resp = new MessageUtil<>(SDTPnotifyXDRData_Resp.class);
         // XDR原始码流通知应答
         MessageUtil<SDTPXDRRawDataSend_Resp> XDRRawDataSend_Resp = new MessageUtil<>(SDTPXDRRawDataSend_Resp.class);
+        long lastDataTime = System.currentTimeMillis();
 
         SDTPServerHandler(String xdrRule, String noLengthXdrRule) {
             this.xdrRuleUtil = new RuleUtil();
@@ -291,6 +292,8 @@ public class SDTPServer {
 
         @Override
         protected ByteBuf dealHandler(ByteBuf buf) {
+            // 最后收到的数据时间
+            lastDataTime = System.currentTimeMillis();
             before.mark(buf.readableBytes());
             // [Message Header]
             // sdtp数据帧长度
@@ -377,13 +380,58 @@ public class SDTPServer {
                     return XDRRawDataSend_Resp.getResponse();
                 case linkRel_Req:
                 default:
-                    if (fileUtil != null) fileUtil.closeWrite();
-                    if (parallel_num > 1) parallel_close = true;
                     // 关闭客户端连接
                     closeClient();
                     // 应答
                     return linkRel_Resp.getResponse();
             }
+        }
+
+        /**
+         * 资源释放
+         */
+        @Override
+        protected void release() {
+            logger.info("资源释放……");
+            if (fileUtil != null) fileUtil.closeWrite();
+            if (parallel_num > 1) parallel_close = true;
+        }
+
+        /**
+         * 客户端激活的时候
+         *
+         * @param ctx
+         * @throws Exception
+         */
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            super.channelActive(ctx);
+            new Thread(new BaseRunable() {
+                @Override
+                public void exec() throws Exception {
+                    if (isClose()) {
+                        // 关闭自身
+                        stop();
+                    } else {
+                        long nowTime = System.currentTimeMillis();
+                        long diffTime = nowTime - lastDataTime;
+                        if (diffTime > 10 * 1000L) {
+                            logger.warn("diffTime: {}, 超时！主动关闭！", diffTime);
+                            // 关闭自身
+                            stop();
+                            // 关闭通道，添加监听事件
+                            // 因为netty是异步的，需要等待线程执行完成，所以使用监听方式来进行资源释放比较合理
+                            ctx.close().addListener(new ChannelFutureListener() {
+                                @Override
+                                public void operationComplete(ChannelFuture future) throws Exception {
+                                    release();
+                                }
+                            });
+                        }
+                        SleepUtil.sleepMilliSecond(50);
+                    }
+                }
+            }).start();
         }
     }
 }

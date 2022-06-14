@@ -1,16 +1,13 @@
 package com.cqx.netty.util;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 公共服务处理接口
@@ -19,19 +16,20 @@ import java.util.Map;
  */
 public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
-    private Map<String, String> params = new HashMap<>();
     private boolean isClose = false;
 
+    /**
+     * 数据处理
+     *
+     * @param buf
+     * @return
+     */
     protected abstract ByteBuf dealHandler(ByteBuf buf);
 
     /**
-     * 字符串转ByteBuf
-     *
-     * @param msg
-     * @return
+     * 资源释放
      */
-    protected ByteBuf strToByteBuf(String msg) {
-        return Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
+    protected void release() {
     }
 
     /**
@@ -65,7 +63,17 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
-     * 客户端消息读取完成之后的操作
+     * 客户端消息读取完成之后的操作<br>
+     * 总共有3种实现
+     * <ur>
+     * <li>第一种方法：写一个空的buf，并刷新写出区域。完成后关闭sock channel连接。<br>
+     * ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+     * </li>
+     * <li>第二种方法：在client端关闭channel连接，这样的话，会触发两次channelReadComplete方法。<br>
+     * ctx.flush();</li>
+     * <li>第三种：改成这种写法也可以，但是这种写法，没有第一种方法的好。<br>
+     * ctx.flush().close().sync();</li>
+     * </ur>
      *
      * @param ctx
      * @throws Exception
@@ -73,17 +81,19 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         logger.debug("server channelReadComplete..");
-        // 第一种方法：写一个空的buf，并刷新写出区域。完成后关闭sock channel连接。
-//        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        // 第二种方法：在client端关闭channel连接，这样的话，会触发两次channelReadComplete方法。
-//        ctx.flush();
-        // 第三种：改成这种写法也可以，但是这种写法，没有第一种方法的好。
-//        ctx.flush().close().sync();
         if (this.isClose) {
-            ctx.close().sync();
+            logger.debug("{} 通道准备关闭.", this);
+            // 关闭通道，添加监听事件
+            // 因为netty是异步的，需要等待线程执行完成，所以使用监听方式来进行资源释放比较合理
+            ctx.close().addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    // 资源释放
+                    release();
+                }
+            });
         } else {
             super.channelReadComplete(ctx);
-//            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER);
         }
     }
 
@@ -111,5 +121,14 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
      */
     protected void closeClient() {
         this.isClose = true;
+    }
+
+    /**
+     * 获取关闭的状态
+     *
+     * @return isClose
+     */
+    public boolean isClose() {
+        return isClose;
     }
 }

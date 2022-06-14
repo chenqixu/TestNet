@@ -1,5 +1,8 @@
 package com.cqx.netty.util;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.util.CharsetUtil;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -469,5 +472,15 @@ public class ByteUtil {
             logger.error("tbcd error. data = {}", bytesToHexStringH(bytes, " "));
             return StringUtils.EMPTY;
         }
+    }
+
+    /**
+     * 字符串转ByteBuf
+     *
+     * @param msg
+     * @return
+     */
+    public static ByteBuf strToByteBuf(String msg) {
+        return Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
     }
 }
