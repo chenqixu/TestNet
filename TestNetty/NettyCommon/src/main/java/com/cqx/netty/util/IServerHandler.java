@@ -33,6 +33,12 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
+     * 异常资源释放
+     */
+    protected void exceptionRelease() {
+    }
+
+    /**
      * 这里我们覆盖了chanelRead()事件处理方法。 每当从客户端收到新的数据时，这个方法会在收到消息时被调用，
      * 这个例子中，收到的消息的类型是ByteBuf
      *
@@ -113,7 +119,13 @@ public abstract class IServerHandler extends ChannelInboundHandlerAdapter {
         logger.info("server occur exception:" + cause.getMessage());
         // 出现异常就关闭
         cause.printStackTrace();
-        ctx.close();
+        ctx.close().addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                // 异常资源释放
+                exceptionRelease();
+            }
+        });
     }
 
     /**

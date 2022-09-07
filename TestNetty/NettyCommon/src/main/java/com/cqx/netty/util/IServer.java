@@ -40,6 +40,7 @@ public class IServer {
         int workerGroup_nThreads = Utils.setValDefault(params, NetConstant.workerGroup_nThreads, 1);
         int SO_BACKLOG = Utils.setValDefault(params, NetConstant.SO_BACKLOG, 128);
         boolean SO_KEEPALIVE = Utils.setValDefault(params, NetConstant.SO_KEEPALIVE, true);
+        boolean TCP_NODELAY = Utils.setValDefault(params, NetConstant.TCP_NODELAY, false);
         if (channelCls == null) channelCls = NioServerSocketChannel.class;
         //================================
         // (1)
@@ -73,7 +74,19 @@ public class IServer {
                 // 你注意到option()和childOption()了吗？
                 // option()用于接受传入连接的NioServerSocketChannel。
                 // childOption()用于父服务器通道接受的通道，在本例中是NioSocketChannel。
-                .childOption(ChannelOption.SO_KEEPALIVE, SO_KEEPALIVE); // (6)
+                .childOption(ChannelOption.SO_KEEPALIVE, SO_KEEPALIVE) // (6)
+                //================================
+                // (7)
+                //================================
+                // Nagle算法试图减少TCP包的数量和结构性开销, 将多个较小的包组合成较大的包进行发送
+                // 这个算法受TCP延迟确认影响, 会导致相继两次向连接发送请求包,读数据时会有一个最多达500毫秒的延时.
+                // TCP/IP协议中，无论发送多少数据，总是要在数据前面加上协议头，
+                // 同时，对方接收到数据，也需要发送ACK表示确认。为了尽可能的利用网络带宽，
+                // TCP总是希望尽可能的发送足够大的数据。（一个连接会设置MSS参数，
+                // 因此，TCP/IP希望每次都能够以MSS尺寸的数据块来发送数据）。
+                // Nagle算法就是为了尽可能发送大块数据，避免网络中充斥着许多小数据块。
+                .childOption(ChannelOption.TCP_NODELAY, TCP_NODELAY) // (7)
+        ;
         return serverBootstrap;
     }
 
