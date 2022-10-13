@@ -3,7 +3,7 @@ package com.cqx.netty.sdtp.rule;
 import com.cqx.common.utils.system.TimeCostUtil;
 import com.cqx.netty.sdtp.bean.*;
 import com.cqx.netty.sdtp.util.MessageUtil;
-import com.cqx.netty.util.ByteUtil;
+import com.cqx.common.utils.system.ByteUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;

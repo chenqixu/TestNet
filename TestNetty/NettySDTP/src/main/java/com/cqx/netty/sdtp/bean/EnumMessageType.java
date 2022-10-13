@@ -1,6 +1,6 @@
 package com.cqx.netty.sdtp.bean;
 
-import com.cqx.netty.util.ByteUtil;
+import com.cqx.common.utils.system.ByteUtil;
 
 /**
  * 消息类型

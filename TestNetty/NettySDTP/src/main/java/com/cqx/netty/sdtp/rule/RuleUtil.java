@@ -1,7 +1,7 @@
 package com.cqx.netty.sdtp.rule;
 
 import com.cqx.common.utils.system.ClassUtil;
-import com.cqx.netty.util.ByteUtil;
+import com.cqx.common.utils.system.ByteUtil;
 import com.cqx.netty.util.Constant;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;

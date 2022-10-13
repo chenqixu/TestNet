@@ -1,7 +1,7 @@
 package com.cqx.netty.sdtp.rule.impl;
 
 import com.cqx.netty.sdtp.rule.AnnoRule;
-import com.cqx.netty.util.ByteUtil;
+import com.cqx.common.utils.system.ByteUtil;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

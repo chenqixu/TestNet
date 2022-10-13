@@ -14,6 +14,8 @@ import java.nio.ByteOrder;
 import java.util.BitSet;
 import java.util.Random;
 
+import com.cqx.common.utils.system.ByteUtil;
+
 public class ByteUtilTest {
     private static Random random = new Random();
     private String path = "d:\\tmp\\data\\xdr\\";

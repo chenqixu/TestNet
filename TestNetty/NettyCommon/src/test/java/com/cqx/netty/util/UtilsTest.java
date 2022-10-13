@@ -14,6 +14,8 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
+import com.cqx.common.utils.system.ByteUtil;
+
 public class UtilsTest {
     private static final Logger logger = LoggerFactory.getLogger(UtilsTest.class);
     private Utils utils;

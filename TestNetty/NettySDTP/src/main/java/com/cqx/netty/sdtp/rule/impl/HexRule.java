@@ -2,7 +2,7 @@ package com.cqx.netty.sdtp.rule.impl;
 
 import com.cqx.netty.sdtp.rule.AnnoRule;
 import com.cqx.netty.sdtp.rule.IDefaultValue;
-import com.cqx.netty.util.ByteUtil;
+import com.cqx.common.utils.system.ByteUtil;
 
 /**
  * 16进制
