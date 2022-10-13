@@ -28,6 +28,8 @@ public enum EnumMessageType {
     XDRCompressRawDataSend_Resp(0x8106, "XDR对应原始压缩数据传输应答"),
     CompressNego_Req(0x000E, "压缩协商请求"),
     CompressNego_Resp(0x800E, "压缩协商应答"),
+    XDRRawDataQuery_Req(0x0008, "XDR数据反查请求"),
+    XDRRawDataQuery_Resp(0x8008, "XDR数据反查应答"),
     ;
 
     private byte[] value;
@@ -41,15 +43,44 @@ public enum EnumMessageType {
     }
 
     public static EnumMessageType ValueOf(int intValue) {
-        if (intValue == linkRel_Req.intValue) {
+        // 版本协商
+        if (intValue == verNego_Req.intValue) {
+            return verNego_Req;
+        } else if (intValue == verNego_Resp.intValue) {
+            return verNego_Resp;
+        }
+        // 鉴权
+        else if (intValue == linkAuth_Req.intValue) {
+            return linkAuth_Req;
+        } else if (intValue == linkAuth_Resp.intValue) {
+            return linkAuth_Resp;
+        }
+        // 链路检测
+        else if (intValue == linkCheck_Req.intValue) {
+            return linkCheck_Req;
+        } else if (intValue == linkCheck_Resp.intValue) {
+            return linkCheck_Resp;
+        }
+        // 连接释放
+        else if (intValue == linkRel_Req.intValue) {
             return linkRel_Req;
         } else if (intValue == linkRel_Resp.intValue) {
             return linkRel_Resp;
-        } else if (intValue == notifyXDRData_Req.intValue) {
+        }
+        // 链路数据发送校验
+        else if (intValue == linkDataCheck_Req.intValue) {
+            return linkDataCheck_Req;
+        } else if (intValue == linkDataCheck_Resp.intValue) {
+            return linkDataCheck_Resp;
+        }
+        // XDR数据通知
+        else if (intValue == notifyXDRData_Req.intValue) {
             return notifyXDRData_Req;
         } else if (intValue == notifyXDRData_Resp.intValue) {
             return notifyXDRData_Resp;
-        }else if (intValue == XDRRawDataSend_Req.intValue) {
+        }
+        // XDR对应原始数据传输
+        else if (intValue == XDRRawDataSend_Req.intValue) {
             return XDRRawDataSend_Req;
         } else if (intValue == XDRRawDataSend_Resp.intValue) {
             return XDRRawDataSend_Resp;

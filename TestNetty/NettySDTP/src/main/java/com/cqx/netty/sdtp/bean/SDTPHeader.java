@@ -1,8 +1,6 @@
 package com.cqx.netty.sdtp.bean;
 
-import com.cqx.common.utils.system.ByteUtil;
-
-import java.nio.ByteBuffer;
+import io.netty.buffer.ByteBuf;
 
 /**
  * SDTPHeader
@@ -45,60 +43,27 @@ import java.nio.ByteBuffer;
  *
  * @author chenqixu
  */
-public class SDTPHeader {
-    private long TotalLength;
-    private EnumMessageType MessageType;
-    private long SequenceId;
-    private int TotalContents;
-    private ByteBuffer byteBuffer = ByteBuffer.allocate(12);
+public interface SDTPHeader {
 
-    public byte[] getBytes() {
-        byteBuffer.clear();
-        byteBuffer.put(ByteUtil.longTo4ByteArray(TotalLength));
-        byteBuffer.put(MessageType.getValue());
-        byteBuffer.put(ByteUtil.longTo4ByteArray(SequenceId));
-        byteBuffer.put(ByteUtil.intTo2ByteArray(TotalContents));
-        byteBuffer.flip();
-        byte[] bytes = new byte[12];
-        byteBuffer.get(bytes, 0, 12);
-        return bytes;
-    }
+    byte[] getBytes();
 
-    public long getTotalLength() {
-        return TotalLength;
-    }
+    long getTotalLength();
 
-    public void setTotalLength(long totalLength) {
-        TotalLength = totalLength;
-    }
+    void setTotalLength(long totalLength);
 
-    public EnumMessageType getMessageType() {
-        return MessageType;
-    }
+    EnumMessageType getMessageType();
 
-    public void setMessageType(EnumMessageType messageType) {
-        MessageType = messageType;
-    }
+    void setMessageType(EnumMessageType messageType);
 
-    public long getSequenceId() {
-        return SequenceId;
-    }
+    long getSequenceId();
 
-    public void setSequenceId(long sequenceId) {
-        SequenceId = sequenceId;
-    }
+    void setSequenceId(long sequenceId);
 
-    public int getTotalContents() {
-        return TotalContents;
-    }
+    int getTotalContents();
 
-    public void setTotalContents(int totalContents) {
-        TotalContents = totalContents;
-    }
+    void setTotalContents(int totalContents);
 
-    @Override
-    public String toString() {
-        return String.format("TotalLength: %s, MessageType: %s, SequenceId: %s, TotalContents: %s"
-                , TotalLength, MessageType, SequenceId, TotalContents);
-    }
+    int getHeaderBodyLength();
+
+    void parser(ByteBuf buf);
 }

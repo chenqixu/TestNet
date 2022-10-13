@@ -1,7 +1,8 @@
 package com.cqx.netty.sdtp.util;
 
-import com.cqx.netty.sdtp.bean.EnumMessageType;
+import com.cqx.netty.sdtp.bean.SDTP4GHeader;
 import com.cqx.netty.sdtp.bean.SDTPBody;
+import com.cqx.netty.sdtp.bean.SDTPHeader;
 import com.cqx.netty.sdtp.bean.SDTPMessage;
 import com.cqx.netty.sdtp.rule.RuleBean;
 import com.cqx.netty.sdtp.rule.RuleUtil;
@@ -16,6 +17,9 @@ import java.util.List;
  * @author chenqixu
  */
 public class MessageUtil<T extends SDTPBody> {
+    // Header版本
+    public static String HEADER_VERSION = SDTP4GHeader.class.getName();
+
     private String split;
     private RuleUtil ruleUtil;
     private List<RuleBean> ruleBeanList;
@@ -35,7 +39,7 @@ public class MessageUtil<T extends SDTPBody> {
         this.split = split;
         this.ruleUtil = new RuleUtil();
         this.ruleBeanList = ruleUtil.generateRule(rule_data);
-        this.sdtpMessage = new SDTPMessage<>(generateBody().getMessageType());
+        this.sdtpMessage = new SDTPMessage<>(generateBody().getMessageType(), getHeader());
     }
 
     public static SDTPMessage parser(byte[] bytes) {
@@ -45,22 +49,25 @@ public class MessageUtil<T extends SDTPBody> {
     }
 
     public static SDTPMessage parser(ByteBuf buf) {
-        // [Message Header]
-        // sdtp数据帧长度
-        long msgLength = buf.readUnsignedInt();
-        // 消息类型
-        int msgType = buf.readUnsignedShort();
-        // sdtp包头中的交互的流水号
-        long sequenceId = buf.readUnsignedInt();
-        // sdtp包头中的事件数量
-        int totalContents = buf.readUnsignedShort();
-        EnumMessageType messageType = EnumMessageType.ValueOf(msgType);
-        if (messageType == null) {
-            messageType = EnumMessageType.linkRel_Req;
+        SDTPHeader sdtpHeader = getHeader();
+        // 解析包头
+        sdtpHeader.parser(buf);
+        return new SDTPMessage(sdtpHeader);
+    }
+
+    /**
+     * 根据配置的类名构造一个类
+     *
+     * @return
+     */
+    public static SDTPHeader getHeader() {
+        try {
+            Class headerCls = Class.forName(HEADER_VERSION);
+            return (SDTPHeader) headerCls.newInstance();
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+            throw new NullPointerException(String.format("header构造异常！使用的构造类：%s"
+                    , HEADER_VERSION));
         }
-        SDTPMessage sdtpMessage = new SDTPMessage(messageType);
-        sdtpMessage.parserHeader(msgLength, messageType, sequenceId, totalContents);
-        return sdtpMessage;
     }
 
     public void append(String data) {
@@ -83,8 +90,20 @@ public class MessageUtil<T extends SDTPBody> {
         return sdtpMessage.getBytes();
     }
 
+    public byte[] getMessage(long sequenceId) {
+        sdtpMessage.generateHeader(sequenceId);
+        return sdtpMessage.getBytes();
+    }
+
+    public ByteBuf getResponse(long sequenceId) {
+        byte[] bytes = getMessage(sequenceId);
+        ByteBuf response = Unpooled.buffer(bytes.length);
+        response.writeBytes(bytes);
+        return response;
+    }
+
     public ByteBuf getResponse() {
-        byte[] bytes = getMessage();
+        byte[] bytes = getMessage(1L);
         ByteBuf response = Unpooled.buffer(bytes.length);
         response.writeBytes(bytes);
         return response;

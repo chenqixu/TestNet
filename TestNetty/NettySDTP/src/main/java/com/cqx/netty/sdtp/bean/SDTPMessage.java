@@ -15,8 +15,14 @@ public class SDTPMessage<T extends SDTPBody> {
     private EnumMessageType MessageType;
     private ByteBuffer byteBuffer;
 
-    public SDTPMessage(EnumMessageType MessageType) {
+    public SDTPMessage(SDTPHeader sdtpHeader) {
+        this.MessageType = sdtpHeader.getMessageType();
+        this.sdtpHeader = sdtpHeader;
+    }
+
+    public SDTPMessage(EnumMessageType MessageType, SDTPHeader sdtpHeader) {
         this.MessageType = MessageType;
+        this.sdtpHeader = sdtpHeader;
     }
 
     public void addSdtpBody(T sdtpBody) {
@@ -27,27 +33,30 @@ public class SDTPMessage<T extends SDTPBody> {
         this.sdtpBody.clear();
     }
 
-    public void parserHeader(long TotalLength, EnumMessageType MessageType, long SequenceId, int TotalContents) {
-        sdtpHeader = new SDTPHeader();
+    public void parserHeader(int TotalLength, EnumMessageType MessageType, long SequenceId, int TotalContents) {
         sdtpHeader.setTotalLength(TotalLength);
         sdtpHeader.setMessageType(MessageType);
         sdtpHeader.setSequenceId(SequenceId);
         sdtpHeader.setTotalContents(TotalContents);
     }
 
+    // todo 在复用上可能有点问题
     public void generateHeader() {
-        sdtpHeader = new SDTPHeader();
+        generateHeader(1L);
+    }
+
+    public void generateHeader(long sequenceId) {
         sdtpHeader.setMessageType(MessageType);
         // 设置header.SequenceId
-        sdtpHeader.setSequenceId(1);
+        sdtpHeader.setSequenceId(sequenceId);
         // 设置header.TotalContents
         sdtpHeader.setTotalContents(sdtpBody.size());
         // 设置header.TotalLength
-        // header固定12byte
+        // header固定，4G是9byte，5G是12byte
         // body由多个<XDRType,Load>组成
         // XDRType固定1byte
         // Load不定长
-        int TotalLength = 12;
+        int TotalLength = sdtpHeader.getHeaderBodyLength();
         for (SDTPBody sdtpBody : sdtpBody) {
             TotalLength += sdtpBody.length();
         }
