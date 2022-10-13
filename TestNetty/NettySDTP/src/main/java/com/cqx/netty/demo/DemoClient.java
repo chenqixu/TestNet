@@ -35,8 +35,8 @@ public class DemoClient {
     class ClientReceive implements SocketClient.ReceiveCall {
 
         @Override
-        public void read(InputStream in) throws IOException {
-
+        public byte[] read(InputStream in) throws IOException {
+            return new byte[]{};
         }
     }
 }

@@ -75,8 +75,8 @@ public class SocketClient implements Closeable {
      *
      * @throws IOException
      */
-    public void receive(ReceiveCall receiveCall) throws IOException {
-        receiveCall.read(in);
+    public byte[] receive(ReceiveCall receiveCall) throws IOException {
+        return receiveCall.read(in);
     }
 
     /**
@@ -113,6 +113,6 @@ public class SocketClient implements Closeable {
     }
 
     public interface ReceiveCall {
-        void read(InputStream in) throws IOException;
+        byte[] read(InputStream in) throws IOException;
     }
 }

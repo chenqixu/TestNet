@@ -141,7 +141,7 @@ public class SDTPClient {
     class ClientReceive implements SocketClient.ReceiveCall {
 
         @Override
-        public void read(InputStream in) throws IOException {
+        public byte[] read(InputStream in) throws IOException {
             // 先读SDTP头部，定长12个字节
             byte[] sdtpHeaderBytes = new byte[12];
             int headerReadLen = in.read(sdtpHeaderBytes);
@@ -152,6 +152,7 @@ public class SDTPClient {
             byte[] sdtpBodyBytes = new byte[lastLen];
             int bodyReadLen = in.read(sdtpBodyBytes);
             logger.info("SDTPHeader: {}，bodyReadLen：{}", sdtpHeader, bodyReadLen);
+            return sdtpBodyBytes;
         }
     }
 }
