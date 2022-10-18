@@ -1,9 +1,9 @@
 package com.cqx.netty.sdtp.rule;
 
+import com.cqx.common.utils.system.ByteUtil;
 import com.cqx.common.utils.system.TimeCostUtil;
 import com.cqx.netty.sdtp.bean.*;
 import com.cqx.netty.sdtp.util.MessageUtil;
-import com.cqx.common.utils.system.ByteUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
@@ -18,6 +18,92 @@ import java.util.List;
 public class RuleUtilTest {
     private static final Logger logger = LoggerFactory.getLogger(RuleUtilTest.class);
     public static String[] http = new String[]{"1235|||||255|8|6149|FE000560ACCA2F0000000200A83A0000|103|10||||2|2409:8034:4040:1300:0:0:0:102|2409:8034:4021:0:0:0:140E:701|2152|2152|1205880630|68217329|4294967295|1099511627775||255|4294967295|255|1|133|FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF|65535|1620581400956000|1620581401188000|0.000000|0.000000|65535|255|1|5|17|3|0|1|255.255.255.255|2409:8934:282:2946:B10D:86BB:5B2B:FB81|55492|0|255.255.255.255|2409:8C54:881:129:0:FF:B026:25AF|80|1331|1323|6|6|225000|211000|0|0|0|1|21000|14000|0|0|5000|27000|243|1312|1|0|1|1|1|0|0|5|0|5|0|1|21|0||1|0|3|6|302|27000|27000|130000|baiducdncmn2.inter.iqiyi.com|http://baiducdncmn2.inter.iqiyi.com/videos/vts/20210130/d0/31/af1a11ad7d34e21070bc89c066986a3c.ts?key=0f7daec203cd0441c4fbeaadc38daacc0&dis_k=44c37d8a19ea8673faaa2096eaee2bfb&dis_t=1612025412&dis_dz=CMNET-FuJian_FuZhou&dis_st=49&src=iqiyi.com&dis_hit=0&dis_tag=02000000&uuid=df683305-60158e44-250&hotlevel=4&sgti=&qd_uid=0&qd_tm=1612025412720&sd=0&start=0&ve=&end=142128&qd_ip=df683305&dfp=&qd_tvid=2984558307645000&qypid=2984558307645000_04000000001000000000_75&qd_p=df683305&qd_k=916afb7be3624ecc3f522f02737a9ee0&qd_src=02029022240000000000&qd_vip=0&contentlength=142128&z=baiducdn2_cmnet||HUAWEI-LIO-AN00__weibo__11.1.3__android__android10_unknown Lavf/57.41.100|text/html|||0||3|0|232000|0|0|http://[2409:8c34:0c00:0006::112.49.48.41]/r/baiducdncmn2.inter.iqiyi.com/videos/vts/20210130/d0/31/af1a11ad7d34e21070bc89c0669|1||65535|65535"};
+
+    @Test
+    public void newParser() throws Exception {
+        // fieldName-readLengthRule-parserRule-defaultValueRule-groupRule
+        // V：数据的二进制形式
+        // LV：L表示长度，占两个byte，V表示数据的二进制形式
+        // TLV（TV）：需要按Tag进行包装
+        // TLV：T和F占前面两个byte，L占中间两个byte，V在最后，反向解析的时候需要读取L
+        // TV：T和F占前面两个byte，V在最后，反向解析的时候需要读取F
+        // readLengthRule：Lx，LV，LIP，
+        // GROUP：g1，gp
+        String rule1 = "p1-L1-byte-N1,p2-L2-byte-F,p6-LV-string-F,p9-LIP[p1-ip-F,p10-T1L1-byte-N1-G1,p11-T2L1-byte-N1-GP,p12-T3LV-string-F-GP";
+        // Ln
+        // LV
+        // LIP[
+        // TxL0，因为length由format决定
+        // TxLV
+        // TxLIP[
+        // p12-T11L5-byte-F
+        // p13-T3LV-string-F
+        RuleUtil ruleUtil = new RuleUtil();
+        List<MultipleRuleBean> multipleRuleBeans = ruleUtil.generateMultipleRule(rule1);
+        for (MultipleRuleBean multipleRuleBean : multipleRuleBeans) {
+            logger.info("{}", multipleRuleBean, multipleRuleBean.getGroupFirstRule());
+            if (multipleRuleBean.getRuleType().equals(EnumRuleType.SINGLE)) {
+                logger.info("SINGLE：{}", multipleRuleBean.getSingleRuleBean());
+            } else if (multipleRuleBean.getRuleType().equals(EnumRuleType.GROUP)) {
+                logger.info("GROUP_First：{}", multipleRuleBean.getGroupFirstRule());
+                logger.info("GROUP_Body：{}", multipleRuleBean.getGroupRuleBeanList());
+            }
+        }
+        ByteBuf data = Unpooled.buffer(3);
+        // p1，因为全F，所以触发了N1默认值
+        data.writeByte(0xff);
+        // p2
+        data.writeShort(255);
+        // p6
+        data.writeShort(6);
+        String p6 = "测试";
+        data.writeBytes(p6.getBytes(StandardCharsets.UTF_8));
+        // p9
+        String ip = "10.1.8.203";//"234e:3:4567:0::3a";//"10.1.8.203";
+        InetAddress host = InetAddress.getByName(ip);
+        data.writeBytes(host.getAddress());
+        // p10，TV格式，tag1
+        data.writeByte(0x01); // 快索引低2位0，tag：1
+        data.writeByte(0x01); // 块索引高4位0，format：1
+        data.writeByte(0x02); // V值
+        // =========================
+        // p11，TV格式，tag2
+        data.writeByte(0x02); // 快索引低2位0，tag：2
+        data.writeByte(0x01); // 块索引高4位0，format：1
+        data.writeByte(0x05); // V值
+        // p12，TLV格式，tag3
+        data.writeByte(0x03); // 快索引低2位0，tag：3
+        data.writeByte(0x06); // 块索引高4位0，format：6
+        data.writeBytes("你好".getBytes(StandardCharsets.UTF_8)); // V值，UTF-8下，一个中文3个字节
+        // =========================
+        // p11，TV格式，tag2
+        data.writeByte(0x02); // 快索引低2位0，tag：2
+        data.writeByte(0x01); // 块索引高4位0，format：1
+        data.writeByte(0x06); // V值
+        // p12，TLV格式，tag3
+        data.writeByte(0x03); // 快索引低2位0，tag：3
+        data.writeByte(0x00); // 块索引高4位0，format：0
+        data.writeByte(0x00); // 长度
+        data.writeByte("天黑了".getBytes(StandardCharsets.UTF_8).length); // 长度
+        data.writeBytes("天黑了".getBytes(StandardCharsets.UTF_8)); // V值，UTF-8下，一个中文3个字节
+        // 解析
+        String ret = ruleUtil.parserMultiple(multipleRuleBeans, data);
+        logger.info(String.format("结果：%s", ret));
+    }
+
+    @Test
+    public void reverseNew() {
+        String datas = "1|255|测试|10.1.8.203|2|5|你好|6|天黑了";
+        String[] data = datas.split("\\|", -1);
+        String rule2 = "p1-L1-byte-N1,p2-L2-byte-F,p6-LV-string-F,p9-LIP[p1-ip-F,p10-T1L1-byte-N1-G1,p11-T2L1-byte-N1-GP,p12-T3LV-string-F-GP";
+        RuleUtil ruleUtil = new RuleUtil();
+        List<MultipleRuleBean> multipleRuleBeans = ruleUtil.generateMultipleRule(rule2);
+        byte[] bytes = ruleUtil.reverseMultiple(multipleRuleBeans, data);
+        ByteBuf byteBuf = Unpooled.buffer(bytes.length);
+        byteBuf.writeBytes(bytes);
+        String ret = ruleUtil.parserMultiple(multipleRuleBeans, byteBuf);
+        logger.info(String.format("结果：%s", ret));
+    }
 
     @Test
     public void parser() throws Exception {
