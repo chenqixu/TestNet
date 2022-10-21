@@ -1,5 +1,6 @@
 package com.cqx.netty.util;
 
+import com.cqx.common.utils.system.ArraysUtil;
 import org.junit.Test;
 import sun.misc.Unsafe;
 
@@ -116,7 +117,7 @@ public class ByteUtilTest {
                     for (int fieldLen : fieldsLenArray) {
                         byte[] bytes = new byte[8];
                         int readLen = fis.read(bytes, 0, fieldLen);
-                        byte[] newBytes = ByteUtil.arrayAdd(head, bytes, readLen);
+                        byte[] newBytes = ArraysUtil.arrayAdd(head, bytes, readLen);
                         String value = ByteUtil.unsignedBytes(newBytes);
 //                        System.out.println(value);
                     }

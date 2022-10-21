@@ -1,5 +1,6 @@
 package com.cqx.netty.sdtp.bean;
 
+import com.cqx.common.utils.system.ArraysUtil;
 import com.cqx.common.utils.system.ByteUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -33,9 +34,9 @@ public class SDTPlinkAuth_Req implements SDTPBody {
     public byte[] getBytes() {
         byte[] LoginID_byte = LoginID.getBytes(StandardCharsets.UTF_8);
         byte[] Digest_byte = Digest.getBytes(StandardCharsets.ISO_8859_1);
-        byte[] newArray = ByteUtil.arrayAdd(LoginID_byte, Digest_byte, Digest_byte.length);
-        byte[] newArray1 = ByteUtil.arrayAdd(newArray, ByteUtil.longTo4ByteArray(Timestamp), 4);
-        return ByteUtil.arrayAdd(newArray1, ByteUtil.intTo2ByteArray(RAND), 2);
+        byte[] newArray = ArraysUtil.arrayAdd(LoginID_byte, Digest_byte, Digest_byte.length);
+        byte[] newArray1 = ArraysUtil.arrayAdd(newArray, ByteUtil.longTo4ByteArray(Timestamp), 4);
+        return ArraysUtil.arrayAdd(newArray1, ByteUtil.intTo2ByteArray(RAND), 2);
     }
 
     @Override

@@ -1,9 +1,10 @@
 package com.cqx.netty.sdtp.rule.impl;
 
+import com.cqx.common.utils.system.ArraysUtil;
+import com.cqx.common.utils.system.ByteUtil;
 import com.cqx.netty.sdtp.rule.AnnoRule;
 import com.cqx.netty.sdtp.rule.IDefaultValue;
 import com.cqx.netty.sdtp.rule.IRule;
-import com.cqx.common.utils.system.ByteUtil;
 
 import java.math.BigInteger;
 
@@ -45,7 +46,7 @@ public class ByteRule implements IRule {
             for (int i = 0; i < diff; i++) {
                 newbytes[i] = 0x00;
             }
-            bytes = ByteUtil.arrayAdd(newbytes, bytes, bytes.length);
+            bytes = ArraysUtil.arrayAdd(newbytes, bytes, bytes.length);
         } else if (bytes.length > size) {
             // 取低位
             int diff = bytes.length - size;

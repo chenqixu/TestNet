@@ -1,5 +1,6 @@
 package com.cqx.netty.sdtp.bean;
 
+import com.cqx.common.utils.system.ArraysUtil;
 import com.cqx.common.utils.system.ByteUtil;
 
 /**
@@ -30,7 +31,7 @@ import com.cqx.common.utils.system.ByteUtil;
  *
  * @author chenqixu
  */
-public class SDTPnotifyXDRData implements SDTPBody {
+public class SDTPnotifyXDRData_Req implements SDTPBody {
     private byte XDRType = 0x02;
     private byte[] LoadLength;
     private byte[] Load;
@@ -42,11 +43,15 @@ public class SDTPnotifyXDRData implements SDTPBody {
         // 在server的规则中要体现
         // 特别注意：这里的LoadLength是不含自身2个字节的
         return 3 + getLoad().length;
+        // 已改造，这里的LoadLength包含自身2个字节
+//        return 1 + getLoad().length;
     }
 
     @Override
     public byte[] getBytes() {
-        return ByteUtil.arrayAdd(new byte[]{XDRType, LoadLength[0], LoadLength[1]}, Load, Load.length);
+        return ArraysUtil.arrayAdd(new byte[]{XDRType, LoadLength[0], LoadLength[1]}, Load, Load.length);
+        // 已改造，长度由规则确定，不再另外计算
+//        return ByteUtil.arrayAdd(new byte[]{XDRType}, Load, Load.length);
     }
 
     @Override

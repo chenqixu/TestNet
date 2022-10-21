@@ -97,29 +97,37 @@ public class RuleUtil {
     }
 
     public String parserMultiple(List<MultipleRuleBean> multipleRuleBeanList, ByteBuf byteBuf) {
-        return parserMultiple(multipleRuleBeanList, byteBuf, new HashMap<>());
+        return parserMultiple(multipleRuleBeanList, byteBuf, Constant.OUTPUT_SEPARATOR, new HashMap<>());
     }
 
-    public String parserMultiple(List<MultipleRuleBean> multipleRuleBeanList, ByteBuf byteBuf, Map<String, String> map) {
+    public String parserMultiple(List<MultipleRuleBean> multipleRuleBeanList, ByteBuf byteBuf, String SEPARATOR) {
+        return parserMultiple(multipleRuleBeanList, byteBuf, SEPARATOR, new HashMap<>());
+    }
+
+    public String parserMultiple(List<MultipleRuleBean> multipleRuleBeanList, ByteBuf byteBuf, String SEPARATOR, Map<String, String> map) {
         StringBuilder stringBuilder = new StringBuilder();
         for (MultipleRuleBean multipleRuleBean : multipleRuleBeanList) {
             // 解析单个字段
             if (multipleRuleBean.getRuleType().equals(EnumRuleType.SINGLE)) {
-                stringBuilder.append(parser(multipleRuleBean.getSingleRuleBeanList(), byteBuf, map));
+                stringBuilder.append(parser(multipleRuleBean.getSingleRuleBeanList(), byteBuf, SEPARATOR, map));
             }
             // 解析分组
             else if (multipleRuleBean.getRuleType().equals(EnumRuleType.GROUP)) {
                 // 先读循环次数
                 String numberStr = parser(multipleRuleBean.getGroupFirstRule(), byteBuf, "", map);
-                stringBuilder.append(numberStr).append(Constant.OUTPUT_SEPARATOR);
-                int number = Integer.valueOf(numberStr);
-                // 依次循环解析
-                for (int i = 0; i < number; i++) {
-                    stringBuilder.append(parser(multipleRuleBean.getGroupRuleBeanList(), byteBuf, map));
+                stringBuilder.append(numberStr).append(SEPARATOR);
+                if (numberStr == null || numberStr.equals("")) {
+                    // 为空，不解析
+                } else {
+                    int number = Integer.valueOf(numberStr);
+                    // 依次循环解析
+                    for (int i = 0; i < number; i++) {
+                        stringBuilder.append(parser(multipleRuleBean.getGroupRuleBeanList(), byteBuf, SEPARATOR, map));
+                    }
                 }
             }
         }
-        return stringBuilder.toString();
+        return stringBuilder.deleteCharAt(stringBuilder.length() - 1).toString();
     }
 
     /**
@@ -156,11 +164,13 @@ public class RuleUtil {
         StringBuilder stringBuilder = new StringBuilder();
         for (RuleBean ruleBean : ruleBeanList) {
             int readLen = ruleBean.getReadlen();
+            boolean isTlvLength = false;
             // 解析Tag中的format
             if (ruleBean.isTLV()) {
                 // 先读取前面2个字节，Tag+Format
                 byte[] data = new byte[2];
                 byteBuf.readBytes(data);
+//                logger.info("Field：{}，tag：{}", ruleBean.getFieldName(), ByteUtil.unsignedByte(data[0]));
                 // 读取Format，如果值是0，则需要再读取2个字节的长度
                 // 第二个字节高4位是Tag预留字段索引块的高4位
                 // 目前都是0，可以当成0来解析，也可以取低四位
@@ -168,10 +178,12 @@ public class RuleUtil {
                 int format = ByteUtil.byteToFormat(ByteUtil.getLowBit(data[1]));
                 if (format > 0) {
                     readLen = format;
+                } else {
+                    isTlvLength = true;
                 }
             }
             // 解析变长
-            if (readLen == 0 && ruleBean.getReadType().equals(RuleBean.ReadType.LV)) {
+            if (isTlvLength || (readLen == 0 && ruleBean.getReadType().equals(RuleBean.ReadType.LV))) {
                 // 读取长度，2字节
                 byte[] data = new byte[2];
                 byteBuf.readBytes(data);
@@ -203,15 +215,16 @@ public class RuleUtil {
                     byteBuf.readBytes(data);
                     // 根据对应类型进行处理
                     String ret = ruleBean.getRule().read(data, ruleBean.getDefaultValue());
-                    stringBuilder.append(ret).append(SEPARATOR);
+                    stringBuilder.append(ret);
                     map.put(ruleBean.getFieldName(), ret);
 //                    logger.info("FieldName: {}, ret: {}, data: {}", ruleBean.getFieldName(), ret, Arrays.toString(data));
                 } catch (Exception e) {
-                    String errorMessge = String.format("解析异常，规则: %s，异常信息: %s", ruleBean, e.getMessage());
+                    String errorMessge = String.format("解析异常，长度：%s，规则: %s，异常信息: %s", readLen, ruleBean, e.getMessage());
                     logger.error(errorMessge, e);
                     throw e;
                 }
             }
+            stringBuilder.append(SEPARATOR);
         }
         return stringBuilder.toString();
     }
@@ -253,17 +266,26 @@ public class RuleUtil {
             else if (multipleRuleBean.getRuleType().equals(EnumRuleType.GROUP)) {
                 // 分组-首字段
                 String numberStr = queue.poll();
-                if (numberStr == null) {
-                    throw new NullPointerException(String.format("[分组-首字段]%s值为空！"
-                            , multipleRuleBean.getGroupFirstRule().getFieldName()));
-                }
-                int number = Integer.valueOf(numberStr);
-                byteBuffer.put(reverse(multipleRuleBean.getGroupFirstRule(), new String[]{numberStr}));
-                // 分组-body，依次循环解析
-                for (int i = 0; i < number; i++) {
-                    LinkedBlockingQueue<String> bodyQueue = toGroupBodyQueue(
-                            multipleRuleBean.getGroupRuleBeanList().size(), queue);
-                    byteBuffer.put(reverse(multipleRuleBean.getGroupRuleBeanList(), bodyQueue));
+//                if (numberStr == null) {
+//                    throw new NullPointerException(String.format("[分组-首字段]%s值为空！"
+//                            , multipleRuleBean.getGroupFirstRule().getFieldName()));
+//                }
+                if (numberStr == null || numberStr.equals("")) {
+                    byteBuffer.put(reverse(multipleRuleBean.getGroupFirstRule(), new String[]{numberStr}));
+                    // 为空，不读
+//                    LinkedBlockingQueue<String> bodyQueue = toGroupBodyQueue(
+//                            multipleRuleBean.getGroupRuleBeanList().size(), queue);
+//                    byteBuffer.put(reverse(multipleRuleBean.getGroupRuleBeanList(), bodyQueue));
+                } else {
+                    // 按个数读取
+                    int number = Integer.valueOf(numberStr);
+                    byteBuffer.put(reverse(multipleRuleBean.getGroupFirstRule(), new String[]{numberStr}));
+                    // 分组-body，依次循环解析
+                    for (int i = 0; i < number; i++) {
+                        LinkedBlockingQueue<String> bodyQueue = toGroupBodyQueue(
+                                multipleRuleBean.getGroupRuleBeanList().size(), queue);
+                        byteBuffer.put(reverse(multipleRuleBean.getGroupRuleBeanList(), bodyQueue));
+                    }
                 }
             }
         }

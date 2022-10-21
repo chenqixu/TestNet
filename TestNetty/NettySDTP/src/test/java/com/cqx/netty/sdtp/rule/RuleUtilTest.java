@@ -4,6 +4,7 @@ import com.cqx.common.utils.system.ByteUtil;
 import com.cqx.common.utils.system.TimeCostUtil;
 import com.cqx.netty.sdtp.bean.*;
 import com.cqx.netty.sdtp.util.MessageUtil;
+import com.cqx.netty.sdtp.util.SdtpUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
@@ -17,7 +18,8 @@ import java.util.List;
 
 public class RuleUtilTest {
     private static final Logger logger = LoggerFactory.getLogger(RuleUtilTest.class);
-    public static String[] http = new String[]{"1235|||||255|8|6149|FE000560ACCA2F0000000200A83A0000|103|10||||2|2409:8034:4040:1300:0:0:0:102|2409:8034:4021:0:0:0:140E:701|2152|2152|1205880630|68217329|4294967295|1099511627775||255|4294967295|255|1|133|FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF|65535|1620581400956000|1620581401188000|0.000000|0.000000|65535|255|1|5|17|3|0|1|255.255.255.255|2409:8934:282:2946:B10D:86BB:5B2B:FB81|55492|0|255.255.255.255|2409:8C54:881:129:0:FF:B026:25AF|80|1331|1323|6|6|225000|211000|0|0|0|1|21000|14000|0|0|5000|27000|243|1312|1|0|1|1|1|0|0|5|0|5|0|1|21|0||1|0|3|6|302|27000|27000|130000|baiducdncmn2.inter.iqiyi.com|http://baiducdncmn2.inter.iqiyi.com/videos/vts/20210130/d0/31/af1a11ad7d34e21070bc89c066986a3c.ts?key=0f7daec203cd0441c4fbeaadc38daacc0&dis_k=44c37d8a19ea8673faaa2096eaee2bfb&dis_t=1612025412&dis_dz=CMNET-FuJian_FuZhou&dis_st=49&src=iqiyi.com&dis_hit=0&dis_tag=02000000&uuid=df683305-60158e44-250&hotlevel=4&sgti=&qd_uid=0&qd_tm=1612025412720&sd=0&start=0&ve=&end=142128&qd_ip=df683305&dfp=&qd_tvid=2984558307645000&qypid=2984558307645000_04000000001000000000_75&qd_p=df683305&qd_k=916afb7be3624ecc3f522f02737a9ee0&qd_src=02029022240000000000&qd_vip=0&contentlength=142128&z=baiducdn2_cmnet||HUAWEI-LIO-AN00__weibo__11.1.3__android__android10_unknown Lavf/57.41.100|text/html|||0||3|0|232000|0|0|http://[2409:8c34:0c00:0006::112.49.48.41]/r/baiducdncmn2.inter.iqiyi.com/videos/vts/20210130/d0/31/af1a11ad7d34e21070bc89c0669|1||65535|65535"};
+    private static final String COMMON_RULE = "Length-L2-byte-F,LocalProvince-L2-byte-F,LocalCity-L2-byte-F,OwnerProvince-L2-byte-F,OwnerCity-L2-byte-F,RoamingType-L1-byte-F,Interface-L1-byte-F,ProbeID-L2-byte-F,XDRID-L16-hex-F,RAT-L1-byte-F,IMSI-L8-byte-F,PEI-L8-byte-F,MSISDN-L16-byte-F,";
+    private static String[] http = new String[]{"1235|||||255|8|6149|FE000560ACCA2F0000000200A83A0000|103|10||||2|2409:8034:4040:1300:0:0:0:102|2409:8034:4021:0:0:0:140E:701|2152|2152|1205880630|68217329|4294967295|1099511627775||255|4294967295|255|1|133|FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF|65535|1620581400956000|1620581401188000|0.000000|0.000000|65535|255|1|5|17|3|0|1|255.255.255.255|2409:8934:282:2946:B10D:86BB:5B2B:FB81|55492|0|255.255.255.255|2409:8C54:881:129:0:FF:B026:25AF|80|1331|1323|6|6|225000|211000|0|0|0|1|21000|14000|0|0|5000|27000|243|1312|1|0|1|1|1|0|0|5|0|5|0|1|21|0||1|0|3|6|302|27000|27000|130000|baiducdncmn2.inter.iqiyi.com|http://baiducdncmn2.inter.iqiyi.com/videos/vts/20210130/d0/31/af1a11ad7d34e21070bc89c066986a3c.ts?key=0f7daec203cd0441c4fbeaadc38daacc0&dis_k=44c37d8a19ea8673faaa2096eaee2bfb&dis_t=1612025412&dis_dz=CMNET-FuJian_FuZhou&dis_st=49&src=iqiyi.com&dis_hit=0&dis_tag=02000000&uuid=df683305-60158e44-250&hotlevel=4&sgti=&qd_uid=0&qd_tm=1612025412720&sd=0&start=0&ve=&end=142128&qd_ip=df683305&dfp=&qd_tvid=2984558307645000&qypid=2984558307645000_04000000001000000000_75&qd_p=df683305&qd_k=916afb7be3624ecc3f522f02737a9ee0&qd_src=02029022240000000000&qd_vip=0&contentlength=142128&z=baiducdn2_cmnet||HUAWEI-LIO-AN00__weibo__11.1.3__android__android10_unknown Lavf/57.41.100|text/html|||0||3|0|232000|0|0|http://[2409:8c34:0c00:0006::112.49.48.41]/r/baiducdncmn2.inter.iqiyi.com/videos/vts/20210130/d0/31/af1a11ad7d34e21070bc89c0669|1||65535|65535"};
 
     @Test
     public void newParser() throws Exception {
@@ -94,15 +96,34 @@ public class RuleUtilTest {
     @Test
     public void reverseNew() {
         String datas = "1|255|测试|10.1.8.203|2|5|你好|6|天黑了";
-        String[] data = datas.split("\\|", -1);
         String rule2 = "p1-L1-byte-N1,p2-L2-byte-F,p6-LV-string-F,p9-LIP[p1-ip-F,p10-T1L1-byte-N1-G1,p11-T2L1-byte-N1-GP,p12-T3LV-string-F-GP";
+        reverseAll(rule2, datas);
+    }
+
+    private void reverseAll(String rule, String datas) {
+        String[] data = datas.split("\\|", -1);
         RuleUtil ruleUtil = new RuleUtil();
-        List<MultipleRuleBean> multipleRuleBeans = ruleUtil.generateMultipleRule(rule2);
+        List<MultipleRuleBean> multipleRuleBeans = ruleUtil.generateMultipleRule(rule);
         byte[] bytes = ruleUtil.reverseMultiple(multipleRuleBeans, data);
+        logger.info("反向解析出来的数据长度：{}", bytes.length);
         ByteBuf byteBuf = Unpooled.buffer(bytes.length);
         byteBuf.writeBytes(bytes);
-        String ret = ruleUtil.parserMultiple(multipleRuleBeans, byteBuf);
+        String ret = ruleUtil.parserMultiple(multipleRuleBeans, byteBuf, "|");
         logger.info(String.format("结果：%s", ret));
+    }
+
+    @Test
+    public void N1N2Test() {
+        String datas = "215|591|0599|591|0599|4|39|5179|000040003b042c040005e165ead4a589|10|460026509653255|8621540687538907|8618250965100|22|1666146899390|1666146899457|1666146899650|1666146899705|||||7|1|1|20||||||||||||||||||||||||||||||1|||||||||||||||||||||2409:802F:5015:1815:0:0:1101:301|2409:8034:4029:7C:0:0:0:1|584168781063|||||6|768|3|3530167559|1|3299742|8760914441||||||||||||||||||||||||||||||||||||||||||||||||||||||||1|8|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||5248306||||||||1";
+        String n1n2_rule = COMMON_RULE + "proceduretype-L2-byte-F,procedurestarttimeonForwardingGW-L8-byte-N0,procedureendtimeonForwardingGW-L8-byte-N0,procedurestarttimeonProbe-L8-byte-N0,procedureendtimeonProbe-L8-byte-N0,startlocationlongitude-L8-double-F,startlocationlatitude-L8-double-F,StartLocationaltitude-L2-byte-F,locationsource-L1-byte-F,Msgflag-L1-byte-F,procedurestatus-L1-byte-F,requestcausegroup-L1-byte-F,requestcausespecific-L1-byte-F,failurecausegroup-L1-byte-F,failurecausespecific-L1-byte-F,Registrationtype-T0L1-byte-F,Registrationresult-T1L1-byte-F,Deregistrationtype-T2L1-byte-F,Deregistrationdirection-T3L1-byte-F,Reregistrationflag-T4L1-byte-F,Servicetype-T5L1-byte-F,pagingtacnumber-T6L1-byte-F,PagingOrigin-T7L1-byte-F,Accesstype-T8L1-byte-F,AuthType-T9L1-byte-F,AuthFailuredirection-T10L1-byte-F,SelectedNAScipheringalgorithm-T11L1-byte-F,SelectedNASintegrityprotectionalgorithm-T12L1-byte-F,UE'susagesetting-T13L1-byte-F,S1modesupport-T14L1-byte-F,IMSVoPS-T15L1-byte-F,IWKN26-T16L1-byte-F,MulithomedIpv6support-T17L1-byte-F,T3512-T18L4-byte-F,Backofftimer-T19L1-byte-F,MICOindication-T20L1-byte-F,NegotiatedDRXparameters-T21L1-byte-F,ULSESSIONAMBR-T22L8-byte-F,DLSESSIONAMBR-T23L8-byte-F,S_NSSAI_SST-T24L1-byte-F,S_NSSAI_SD-T25L4-byte-F,HandoverType-T26L1-byte-F,Releasedirection-T27L1-byte-F,DLIntraMaxCCNumber-T28L1-byte-F,DLInterMaxCCNumber-T29L1-byte-F,ULIntraMaxCCNumber-T30L1-byte-F,ULInterMaxCCNumber-T31L1-byte-F,SMSindication-T32L1-byte-F,SMStype-T33L1-byte-F,peernumber-T34L13-byte-F,smcnumber-T35L13-byte-F,ResetType-T36L1-byte-F,AMFtrafficloadreductionindication-T37L1-byte-F,firstfailtransprot-T38L1-byte-F,firstfailtrans-T39L1-byte-F,firstfaildirection-T40L1-byte-F,firstfailcausetype-T41L1-byte-F,firstfailcause-T42L1-byte-F,E2Efirstfailtransprot-T43L1-byte-F,E2Efirstfailtrans-T44L2-byte-F,E2Efirstfailcausetype-T45L2-byte-F,E2Efirstfailcause-T46L2-byte-F,SUCI-T47LV-byte-F,amfipadd-LV-ip-F,gnbipadd-LV-ip-F,amfuengapid-T50L5-byte-F,oldamfregionid-T51L1-byte-F,oldamfsetid-T52L2-byte-F,oldamfpointer-T53L1-byte-F,old5gtmsi-T54L4-byte-F,amfregionid-T55L1-byte-F,amfsetid-T56L2-byte-F,amfpointer-T57L1-byte-F,5gtmsi-T58L4-byte-F,locationtype-T59L1-byte-F,Tac-T60L4-byte-F,cellid-T61L5-byte-F,otherlocationtype-T62L1-byte-F,othertac-T63L4-byte-F,othercellid-T64L5-byte-F,rannodeidlength-T65L1-byte-F,rannodeid-T66L4-byte-F,AllowedNSSAInumber-T100L1-byte-F-G1,AllowedNSSAI1SST-T101L1-byte-F-GP,AllowedNSSAI1SD-T102L3-byte-F-GP,AllowedNSSAI1MappedHPLMNSST-T103L1-byte-F-GP,AllowedNSSAI1MappedHPLMNSD-T104L3-byte-F-GP,RejectedNSSAInumber-T105L1-byte-F-G1,RejectedNSSAI1SST-T106L1-byte-F-GP,RejectedNSSAI1SD-T107L3-byte-F-GP,pdusessionnumber-T108L1-byte-F-G1,pdusession1id-T109L1-byte-F-GP,OldPDUsession1ID-T110L1-byte-F-GP,pdusession1reqtype-T111L1-byte-F-GP,pdusession1type-T112L1-byte-F-GP,pdusession1dnn-T113LV-string-F-GP,PDUSession1DNNtype-T114L1-byte-F-GP,PDUSession1direction-T115L1-byte-F-GP,pdusession1useripv4-T116L4-ip-F-GP,pdusession1useripv6-T117L16-ip-F-GP,PDUSession1AlwaysonPDUsessionindication-T118L1-byte-F-GP,pdusession1reqsscmode-T119L1-byte-F-GP,pdusession1sscmode-T120L1-byte-F-GP,pdusession1n3anIPv4Addr-T121L4-ip-F-GP,pdusession1n3anIPv6Addr-T147L16-ip-F-GP,pdusession1n3upfIPv4Addr-T122L4-ip-F-GP,pdusession1n3upfIPv6Addr-T148L16-ip-F-GP,pdusession1n3anteid-T123L4-byte-F-GP,pdusession1n3upfteid-T124L4-byte-F-GP,pdusession1status-T125L1-byte-F-GP,pdusession1failurecausegroup-T126L1-byte-F-GP,pdusession1failurecausespecific-T127L1-byte-F-GP,qosflownumber-T128L1-byte-F-G1,qosflow1id-T129L1-byte-F-GP,qosflow1relatedpsi-T130L1-byte-F-GP,epsbearerid-T131L1-byte-F-GP,qosflow15qi-T132L1-byte-F-GP,qosflow1prioritylevel-T133L1-byte-F-GP,qosflow1ulgbr-T134L4-byte-F-GP,qosflow1dlgbr-T135L4-byte-F-GP,qosflow1ulmbr-T136L4-byte-F-GP,qosflow1dlmbr-T137L4-byte-F-GP,qosflow1status-T149L1-byte-F-GP";
+        reverseAll(n1n2_rule, datas);
+    }
+
+    @Test
+    public void N14Test() {
+        String datas = "|||||47|5179|0000c0003b0827060005e165f127a5ab|10||||100|1666117520415|1666117520431|1666117520440|1666117520443|2|1|404|509|2409:802E:5003:1815:0:0:1101:201|2409:8027:5003:1813:0:0:211:201|11792|80|2||||2|||||1|";
+        String n14_rule = SdtpUtil.COMMON_NOLENGTH_RULE + "ProcedureType-L1-byte-F,procedurestarttimeonForwardingGW-L8-byte-N0,procedureendtimeonForwardingGW-L8-byte-N0,procedurestarttimeonProbe-L8-byte-N0,procedureendtimeonProbe-L8-byte-N0,ProcedureStatus-L1-byte-F,httpreqtype-L1-byte-F,statuscode-L2-byte-F,FailureCause-L2-byte-F,SourceAMFAddress-LV-ip-F,DestinationAMFAddress-LV-ip-F,SourceAMFPort-L2-byte-F,DestinationAMFPort-L2-byte-F,Subproceduretype-L1-byte-F,RequestCause-L1-byte-F,USER_IPv4-T0L4-ip-F,USER_IPv6-T1L16-ip-F,TransferReason-T2L2-byte-F,pdusessionid-T3L1-byte-F,DNN-T4LV-string-F,TAC-T5L2-byte-F,CellID-T6L4-byte-F,accesstype-T7L1-byte-F,locationtype-T8L1-byte-F";
+        reverseAll(n14_rule, datas);
     }
 
     @Test
@@ -180,7 +201,7 @@ public class RuleUtilTest {
     public void notifyXDRData() {
         // XDR数据传输
         String rule_data = "p1-L1-byte-N1,p2-L2-byte-F,p6-LV-string-F,p9-LIP[p1-ip-F";
-        MessageUtil<SDTPnotifyXDRData> notifyXDRData = new MessageUtil<>(SDTPnotifyXDRData.class, rule_data);
+        MessageUtil<SDTPnotifyXDRData_Req> notifyXDRData = new MessageUtil<>(SDTPnotifyXDRData_Req.class, rule_data);
         notifyXDRData.append("1|255|测试1|10.1.8.203");
         notifyXDRData.append("1|255|测试2|10.1.8.204");
         notifyXDRData.append("1|255|测试3|10.1.8.205");

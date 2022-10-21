@@ -2,6 +2,7 @@ package com.cqx.netty.sdtp.bean;
 
 public class SDTPlinkAuth_Resp extends SDTPlinkRel_Resp {
     private byte[] Result;
+
     @Override
     public EnumMessageType getMessageType() {
         return EnumMessageType.linkAuth_Resp;
@@ -14,12 +15,11 @@ public class SDTPlinkAuth_Resp extends SDTPlinkRel_Resp {
 
     @Override
     public byte[] getBytes() {
-        if (this.Result == null){
+        if (this.Result == null) {
             return new byte[]{0x01};
-        }else {
+        } else {
             return Result;
         }
-
     }
 
     @Override

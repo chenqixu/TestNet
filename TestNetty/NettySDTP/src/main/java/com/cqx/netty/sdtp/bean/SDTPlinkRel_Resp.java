@@ -1,5 +1,7 @@
 package com.cqx.netty.sdtp.bean;
 
+import com.cqx.common.utils.system.ByteUtil;
+
 /**
  * 连接释放应答，linkRel_Resp
  * <table>
@@ -46,5 +48,9 @@ public class SDTPlinkRel_Resp implements SDTPBody {
     @Override
     public EnumMessageType getMessageType() {
         return EnumMessageType.linkRel_Resp;
+    }
+
+    public String getResult() {
+        return ByteUtil.unsignedByte(Result);
     }
 }
