@@ -2,6 +2,7 @@ package com.cqx.netty.sdtp.rule;
 
 import com.cqx.common.utils.system.ByteUtil;
 import com.cqx.common.utils.system.ClassUtil;
+import com.cqx.netty.sdtp.exception.SdtpException;
 import com.cqx.netty.util.Constant;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
@@ -49,6 +50,9 @@ public class RuleUtil {
             logger.error(e.getMessage(), e);
         }
     }
+
+    // 当前反向解析字段
+    private RuleBean currentReverseRule;
 
     public List<MultipleRuleBean> generateMultipleRule(String rule) {
         List<MultipleRuleBean> ruleTypeBeanList = new ArrayList<>();
@@ -221,7 +225,7 @@ public class RuleUtil {
                 } catch (Exception e) {
                     String errorMessge = String.format("解析异常，长度：%s，规则: %s，异常信息: %s", readLen, ruleBean, e.getMessage());
                     logger.error(errorMessge, e);
-                    throw e;
+                    throw new SdtpException(errorMessge, e);
                 }
             }
             stringBuilder.append(SEPARATOR);
@@ -233,7 +237,11 @@ public class RuleUtil {
         LinkedBlockingQueue<String> valueQueue = new LinkedBlockingQueue<>();
         try {
             for (String val : values) {
-                valueQueue.put(val);
+                if (val != null) {
+                    valueQueue.put(val);
+                } else {
+                    throw new SdtpException("传入的数据为空！");
+                }
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -257,37 +265,38 @@ public class RuleUtil {
     public byte[] reverseMultiple(List<MultipleRuleBean> multipleRuleBeanList, String[] values) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(32 * 2048);
         LinkedBlockingQueue<String> queue = arrayToQueue(values);
-        for (MultipleRuleBean multipleRuleBean : multipleRuleBeanList) {
-            // 解析单个字段
-            if (multipleRuleBean.getRuleType().equals(EnumRuleType.SINGLE)) {
-                byteBuffer.put(reverse(multipleRuleBean.getSingleRuleBean(), new String[]{queue.poll()}));
-            }
-            // 解析分组
-            else if (multipleRuleBean.getRuleType().equals(EnumRuleType.GROUP)) {
-                // 分组-首字段
-                String numberStr = queue.poll();
-//                if (numberStr == null) {
-//                    throw new NullPointerException(String.format("[分组-首字段]%s值为空！"
-//                            , multipleRuleBean.getGroupFirstRule().getFieldName()));
-//                }
-                if (numberStr == null || numberStr.equals("")) {
-                    byteBuffer.put(reverse(multipleRuleBean.getGroupFirstRule(), new String[]{numberStr}));
+        try {
+            for (MultipleRuleBean multipleRuleBean : multipleRuleBeanList) {
+                // 解析单个字段
+                if (multipleRuleBean.getRuleType().equals(EnumRuleType.SINGLE)) {
+                    byteBuffer.put(reverse(multipleRuleBean.getSingleRuleBean(), new String[]{queue.poll()}));
+                }
+                // 解析分组
+                else if (multipleRuleBean.getRuleType().equals(EnumRuleType.GROUP)) {
+                    // 分组-首字段
+                    String numberStr = queue.poll();
                     // 为空，不读
-//                    LinkedBlockingQueue<String> bodyQueue = toGroupBodyQueue(
-//                            multipleRuleBean.getGroupRuleBeanList().size(), queue);
-//                    byteBuffer.put(reverse(multipleRuleBean.getGroupRuleBeanList(), bodyQueue));
-                } else {
-                    // 按个数读取
-                    int number = Integer.valueOf(numberStr);
-                    byteBuffer.put(reverse(multipleRuleBean.getGroupFirstRule(), new String[]{numberStr}));
-                    // 分组-body，依次循环解析
-                    for (int i = 0; i < number; i++) {
-                        LinkedBlockingQueue<String> bodyQueue = toGroupBodyQueue(
-                                multipleRuleBean.getGroupRuleBeanList().size(), queue);
-                        byteBuffer.put(reverse(multipleRuleBean.getGroupRuleBeanList(), bodyQueue));
+                    if (numberStr == null || numberStr.equals("")) {
+                        byteBuffer.put(reverse(multipleRuleBean.getGroupFirstRule(), new String[]{numberStr}));
+                    } else {
+                        // 按个数读取
+                        int number = Integer.valueOf(numberStr);
+                        byteBuffer.put(reverse(multipleRuleBean.getGroupFirstRule(), new String[]{numberStr}));
+                        // 分组-body，依次循环解析
+                        for (int i = 0; i < number; i++) {
+                            LinkedBlockingQueue<String> bodyQueue = toGroupBodyQueue(
+                                    multipleRuleBean.getGroupRuleBeanList().size(), queue);
+                            byteBuffer.put(reverse(multipleRuleBean.getGroupRuleBeanList(), bodyQueue));
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw new SdtpException(String.format("当前解析异常的规则: %s, 异常信息: %s", currentReverseRule.getFieldName(), e.getMessage()), e);
+        }
+        if (queue.size() > 0) {
+            throw new SdtpException(String.format("数据未完全封装, 剩余数据大小: %s, 剩余数据: %s", queue.size(), queue));
         }
         // 翻转输出
         int size = byteBuffer.position();
@@ -327,6 +336,8 @@ public class RuleUtil {
             RuleBean rb = ruleBeanList.get(i);
             String tmp = valueQueue.poll();
             byte[] tmpBytes;
+            // 当前反向解析字段
+            this.currentReverseRule = rb;
             try {
                 // 这里只有byte需要readLen
                 // ip、string，hex，tbcd都不需要readLen
@@ -335,7 +346,7 @@ public class RuleUtil {
             } catch (Exception e) {
                 String errorMessge = String.format("逆向解析异常，规则: %s，数据: %s，异常信息: %s", rb, tmp, e.getMessage());
                 logger.error(errorMessge, e);
-                throw e;
+                throw new SdtpException(errorMessge, e);
             }
             // 封装TLV、TV
             if (rb.isTLV()) {

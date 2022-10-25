@@ -104,6 +104,7 @@ public class RuleUtilTest {
         String[] data = datas.split("\\|", -1);
         RuleUtil ruleUtil = new RuleUtil();
         List<MultipleRuleBean> multipleRuleBeans = ruleUtil.generateMultipleRule(rule);
+        // 除了反向解析，还要做规则和字段个数校验
         byte[] bytes = ruleUtil.reverseMultiple(multipleRuleBeans, data);
         logger.info("反向解析出来的数据长度：{}", bytes.length);
         ByteBuf byteBuf = Unpooled.buffer(bytes.length);

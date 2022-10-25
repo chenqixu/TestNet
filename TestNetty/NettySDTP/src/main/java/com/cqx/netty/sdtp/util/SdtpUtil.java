@@ -13,6 +13,7 @@ import java.util.Arrays;
  * @author chenqixu
  */
 public class SdtpUtil {
+    public static final String LineENd = "\r\n";
     public static final String LoginID = "simple";
     public static final String sharedSecret = "123456";
     public static final String COMMON_RULE = "Length-L2-byte-F,LocalProvince-L2-byte-F,LocalCity-L2-byte-F,OwnerProvince-L2-byte-F,OwnerCity-L2-byte-F,RoamingType-L1-byte-F,Interface-L1-byte-F,ProbeID-L2-byte-F,XDRID-L16-hex-F,RAT-L1-byte-F,IMSI-L8-byte-F,PEI-L8-byte-F,MSISDN-L16-byte-F,";

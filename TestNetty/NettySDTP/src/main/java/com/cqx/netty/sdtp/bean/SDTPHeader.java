@@ -66,4 +66,8 @@ public interface SDTPHeader {
     int getHeaderBodyLength();
 
     void parser(ByteBuf buf);
+
+    void parserToHex();
+
+    String getHexStr();
 }

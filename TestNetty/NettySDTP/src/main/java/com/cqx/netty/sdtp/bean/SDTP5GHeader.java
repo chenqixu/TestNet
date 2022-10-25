@@ -1,6 +1,7 @@
 package com.cqx.netty.sdtp.bean;
 
 import com.cqx.common.utils.system.ByteUtil;
+import com.cqx.netty.sdtp.util.SdtpUtil;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.ByteBuffer;
@@ -52,6 +53,8 @@ public class SDTP5GHeader implements SDTPHeader {
     private long SequenceId;
     private int TotalContents;
     private ByteBuffer byteBuffer = ByteBuffer.allocate(getHeaderBodyLength());
+    private ByteBuf parserBuffer;
+    private String hexStr;
 
     public byte[] getBytes() {
         byteBuffer.clear();
@@ -104,6 +107,8 @@ public class SDTP5GHeader implements SDTPHeader {
 
     @Override
     public void parser(ByteBuf buf) {
+        // 解析Hex专用
+        this.parserBuffer = buf;
         // [Message Header]
         // sdtp数据帧长度
         long msgLength = buf.readUnsignedInt();
@@ -122,6 +127,42 @@ public class SDTP5GHeader implements SDTPHeader {
         setMessageType(messageType);
         setSequenceId(sequenceId);
         setTotalContents(totalContents);
+    }
+
+    @Override
+    public void parserToHex() {
+        StringBuilder sb = new StringBuilder();
+        parserBuffer.resetReaderIndex();
+        byte[] all_array = new byte[getHeaderBodyLength()];
+        parserBuffer.getBytes(0, all_array);
+        sb.append(String.format("AllHex: %s", ByteUtil.bytesToHexStringH(all_array))).append(SdtpUtil.LineENd);
+        // [Message Header]
+        // sdtp数据帧长度
+        byte[] msgLength_array = new byte[4];
+        parserBuffer.getBytes(0, msgLength_array);
+        long msgLength = parserBuffer.readUnsignedInt();
+        sb.append(String.format("msgLength: %s, HEX: %s", msgLength, ByteUtil.bytesToHexStringH(msgLength_array))).append(SdtpUtil.LineENd);
+        // 消息类型
+        byte[] msgType_array = new byte[2];
+        parserBuffer.getBytes(4, msgType_array);
+        int msgType = parserBuffer.readUnsignedShort();
+        sb.append(String.format("msgType: %s, HEX: %s", msgType, ByteUtil.bytesToHexStringH(msgType_array))).append(SdtpUtil.LineENd);
+        // sdtp包头中的交互的流水号
+        byte[] sequenceId_array = new byte[4];
+        parserBuffer.getBytes(4 + 2, sequenceId_array);
+        long sequenceId = parserBuffer.readUnsignedInt();
+        sb.append(String.format("sequenceId: %s, HEX: %s", sequenceId, ByteUtil.bytesToHexStringH(sequenceId_array))).append(SdtpUtil.LineENd);
+        // sdtp包头中的事件数量
+        byte[] totalContents_array = new byte[2];
+        parserBuffer.getBytes(4 + 2 + 4, totalContents_array);
+        int totalContents = parserBuffer.readUnsignedShort();
+        sb.append(String.format("totalContents: %s, HEX: %s", totalContents, ByteUtil.bytesToHexStringH(totalContents_array))).append(SdtpUtil.LineENd);
+        hexStr = sb.toString();
+    }
+
+    @Override
+    public String getHexStr() {
+        return hexStr;
     }
 
     @Override

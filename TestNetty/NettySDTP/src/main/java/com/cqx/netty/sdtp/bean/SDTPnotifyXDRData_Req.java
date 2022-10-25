@@ -84,4 +84,8 @@ public class SDTPnotifyXDRData_Req implements SDTPBody {
     public void setLoad(byte[] load) {
         Load = load;
     }
+
+    public byte[] getLoadLength() {
+        return LoadLength;
+    }
 }

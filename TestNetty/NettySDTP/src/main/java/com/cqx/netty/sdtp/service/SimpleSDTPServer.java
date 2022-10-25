@@ -106,7 +106,8 @@ public class SimpleSDTPServer {
             this.xdrRuleUtil = new RuleUtil();
             this.multipleRuleBeanList = this.xdrRuleUtil.generateMultipleRule(params.get(PARAM_RULE));
             this.verNego_Resp.append(new byte[]{0x01});
-            this.linkAuth_Resp.append(new byte[]{0x01});
+            // todo linkAuth_Resp
+//            this.linkAuth_Resp.append(new byte[]{0x01});
             this.linkCheck_Resp.append(new byte[]{0x01});
             this.linkRel_Resp.append(new byte[]{0x01});
             this.notifyXDRData_Resp.append(new byte[]{0x01});
