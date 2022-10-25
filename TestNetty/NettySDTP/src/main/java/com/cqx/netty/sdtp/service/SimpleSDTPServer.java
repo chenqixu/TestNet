@@ -6,7 +6,8 @@ import com.cqx.netty.sdtp.bean.*;
 import com.cqx.netty.sdtp.rule.MultipleRuleBean;
 import com.cqx.netty.sdtp.rule.RuleUtil;
 import com.cqx.netty.sdtp.util.MessageUtil;
-import com.cqx.netty.sdtp.util.SdtpUtil;
+import com.cqx.netty.sdtp.util.SHA256Util;
+import com.cqx.netty.sdtp.util.Constant;
 import com.cqx.netty.util.IServer;
 import com.cqx.netty.util.IServerHandler;
 import io.netty.buffer.ByteBuf;
@@ -39,9 +40,9 @@ public class SimpleSDTPServer {
         int port = 9100;
         SimpleSDTPServer simple = new SimpleSDTPServer();
         simple.setPort(port);
-        simple.addParam(PARAM_RULE, SdtpUtil.COMMON_RULE + SdtpUtil.N14_RULE);
-        simple.addParam(PARAM_LOGINID, SdtpUtil.LoginID);
-        simple.addParam(PARAM_SHAREDSECRET, SdtpUtil.sharedSecret);
+        simple.addParam(PARAM_RULE, Constant.COMMON_RULE + Constant.N14_RULE);
+        simple.addParam(PARAM_LOGINID, Constant.LoginID);
+        simple.addParam(PARAM_SHAREDSECRET, Constant.sharedSecret);
         simple.startServer();
     }
 
@@ -209,7 +210,7 @@ public class SimpleSDTPServer {
                     Long rand = Long.parseLong(ByteUtil.unsignedBytes(bytesRand));
 
                     if (loginID.replace(" ", "").equals(params.get(PARAM_LOGINID))) {
-                        byte[] bytesDigests = SdtpUtil.computerDigest(loginID, sharedSecret, timestamp, rand);
+                        byte[] bytesDigests = SHA256Util.computerDigest(loginID, sharedSecret, timestamp, rand);
                         // 打印
                         String s_result = ByteUtil.bytesToHexStringH(bytesDigests, " ");
                         String s_login = ByteUtil.bytesToHexStringH(bytesDigest, " ");

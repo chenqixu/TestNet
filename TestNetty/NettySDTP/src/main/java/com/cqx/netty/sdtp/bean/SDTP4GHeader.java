@@ -1,7 +1,7 @@
 package com.cqx.netty.sdtp.bean;
 
 import com.cqx.common.utils.system.ByteUtil;
-import com.cqx.netty.sdtp.util.SdtpUtil;
+import com.cqx.netty.sdtp.util.Constant;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.ByteBuffer;
@@ -133,28 +133,28 @@ public class SDTP4GHeader implements SDTPHeader {
         parserBuffer.resetReaderIndex();
         byte[] all_array = new byte[getHeaderBodyLength()];
         parserBuffer.getBytes(0, all_array);
-        sb.append(String.format("AllHex: %s", ByteUtil.bytesToHexStringH(all_array))).append(SdtpUtil.LineENd);
+        sb.append(String.format("AllHex: %s", ByteUtil.bytesToHexStringH(all_array))).append(Constant.LineENd);
         // [Message Header]
         // sdtp数据帧长度
         byte[] msgLength_array = new byte[2];
         parserBuffer.getBytes(0, msgLength_array);
         long msgLength = parserBuffer.readUnsignedShort();
-        sb.append(String.format("msgLength: %s, HEX: %s", msgLength, ByteUtil.bytesToHexStringH(msgLength_array))).append(SdtpUtil.LineENd);
+        sb.append(String.format("msgLength: %s, HEX: %s", msgLength, ByteUtil.bytesToHexStringH(msgLength_array))).append(Constant.LineENd);
         // 消息类型
         byte[] msgType_array = new byte[2];
         parserBuffer.getBytes(2, msgType_array);
         int msgType = parserBuffer.readUnsignedShort();
-        sb.append(String.format("msgType: %s, HEX: %s", msgType, ByteUtil.bytesToHexStringH(msgType_array))).append(SdtpUtil.LineENd);
+        sb.append(String.format("msgType: %s, HEX: %s", msgType, ByteUtil.bytesToHexStringH(msgType_array))).append(Constant.LineENd);
         // sdtp包头中的交互的流水号
         byte[] sequenceId_array = new byte[4];
         parserBuffer.getBytes(2 + 2, sequenceId_array);
         long sequenceId = parserBuffer.readUnsignedInt();
-        sb.append(String.format("sequenceId: %s, HEX: %s", sequenceId, ByteUtil.bytesToHexStringH(sequenceId_array))).append(SdtpUtil.LineENd);
+        sb.append(String.format("sequenceId: %s, HEX: %s", sequenceId, ByteUtil.bytesToHexStringH(sequenceId_array))).append(Constant.LineENd);
         // sdtp包头中的事件数量
         byte[] totalContents_array = new byte[1];
         parserBuffer.getBytes(2 + 2 + 4, totalContents_array);
         int totalContents = parserBuffer.readUnsignedByte();
-        sb.append(String.format("totalContents: %s, HEX: %s", totalContents, ByteUtil.bytesToHexStringH(totalContents_array))).append(SdtpUtil.LineENd);
+        sb.append(String.format("totalContents: %s, HEX: %s", totalContents, ByteUtil.bytesToHexStringH(totalContents_array))).append(Constant.LineENd);
         hexStr = sb.toString();
     }
 

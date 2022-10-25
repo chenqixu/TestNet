@@ -4,7 +4,7 @@ import com.cqx.common.utils.system.ByteUtil;
 import com.cqx.common.utils.system.TimeCostUtil;
 import com.cqx.netty.sdtp.bean.*;
 import com.cqx.netty.sdtp.util.MessageUtil;
-import com.cqx.netty.sdtp.util.SdtpUtil;
+import com.cqx.netty.sdtp.util.Constant;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
@@ -123,7 +123,7 @@ public class RuleUtilTest {
     @Test
     public void N14Test() {
         String datas = "|||||47|5179|0000c0003b0827060005e165f127a5ab|10||||100|1666117520415|1666117520431|1666117520440|1666117520443|2|1|404|509|2409:802E:5003:1815:0:0:1101:201|2409:8027:5003:1813:0:0:211:201|11792|80|2||||2|||||1|";
-        String n14_rule = SdtpUtil.COMMON_NOLENGTH_RULE + "ProcedureType-L1-byte-F,procedurestarttimeonForwardingGW-L8-byte-N0,procedureendtimeonForwardingGW-L8-byte-N0,procedurestarttimeonProbe-L8-byte-N0,procedureendtimeonProbe-L8-byte-N0,ProcedureStatus-L1-byte-F,httpreqtype-L1-byte-F,statuscode-L2-byte-F,FailureCause-L2-byte-F,SourceAMFAddress-LV-ip-F,DestinationAMFAddress-LV-ip-F,SourceAMFPort-L2-byte-F,DestinationAMFPort-L2-byte-F,Subproceduretype-L1-byte-F,RequestCause-L1-byte-F,USER_IPv4-T0L4-ip-F,USER_IPv6-T1L16-ip-F,TransferReason-T2L2-byte-F,pdusessionid-T3L1-byte-F,DNN-T4LV-string-F,TAC-T5L2-byte-F,CellID-T6L4-byte-F,accesstype-T7L1-byte-F,locationtype-T8L1-byte-F";
+        String n14_rule = Constant.COMMON_NOLENGTH_RULE + "ProcedureType-L1-byte-F,procedurestarttimeonForwardingGW-L8-byte-N0,procedureendtimeonForwardingGW-L8-byte-N0,procedurestarttimeonProbe-L8-byte-N0,procedureendtimeonProbe-L8-byte-N0,ProcedureStatus-L1-byte-F,httpreqtype-L1-byte-F,statuscode-L2-byte-F,FailureCause-L2-byte-F,SourceAMFAddress-LV-ip-F,DestinationAMFAddress-LV-ip-F,SourceAMFPort-L2-byte-F,DestinationAMFPort-L2-byte-F,Subproceduretype-L1-byte-F,RequestCause-L1-byte-F,USER_IPv4-T0L4-ip-F,USER_IPv6-T1L16-ip-F,TransferReason-T2L2-byte-F,pdusessionid-T3L1-byte-F,DNN-T4LV-string-F,TAC-T5L2-byte-F,CellID-T6L4-byte-F,accesstype-T7L1-byte-F,locationtype-T8L1-byte-F";
         reverseAll(n14_rule, datas);
     }
 

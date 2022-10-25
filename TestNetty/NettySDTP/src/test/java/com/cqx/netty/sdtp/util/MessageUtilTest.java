@@ -47,8 +47,8 @@ public class MessageUtilTest {
 
     @Test
     public void xdrData() {
-        String nolength_rule = SdtpUtil.COMMON_NOLENGTH_RULE + SdtpUtil.N14_RULE;
-        String rule = SdtpUtil.COMMON_RULE + SdtpUtil.N14_RULE;
+        String nolength_rule = Constant.COMMON_NOLENGTH_RULE + Constant.N14_RULE;
+        String rule = Constant.COMMON_RULE + Constant.N14_RULE;
         String data = "|||||47|5179|0000c0003b0827060005e165f127a5ab|10||||100|1666117520415|1666117520431|1666117520440|1666117520443|2|1|404|509|2409:802E:5003:1815:0:0:1101:201|2409:8027:5003:1813:0:0:211:201|11792|80|2||||2|||||1|";
 
         // 发送XDR数据

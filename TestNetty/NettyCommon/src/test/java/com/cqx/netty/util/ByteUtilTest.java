@@ -1,6 +1,7 @@
 package com.cqx.netty.util;
 
 import com.cqx.common.utils.system.ArraysUtil;
+import com.cqx.common.utils.system.NetUtil;
 import org.junit.Test;
 import sun.misc.Unsafe;
 
@@ -154,7 +155,7 @@ public class ByteUtilTest {
         int query = new BigInteger(query_host.getAddress()).intValue();
         int source = new BigInteger(source_host.getAddress()).intValue();
         System.out.println((query & mask) == (source & mask));
-        System.out.println(ByteUtil.isInRange(source_ip, query_ip + "/" + query_ip_mask));
+        System.out.println(NetUtil.isInRange(source_ip, query_ip + "/" + query_ip_mask));
     }
 
     @Test
@@ -163,7 +164,7 @@ public class ByteUtilTest {
         int query_ip_mask = 16;
         String source_ip = "234e:3:4567:0::3a";
 
-        System.out.println("判断：" + ByteUtil.isInRange(source_ip, query_ip, query_ip_mask));
+        System.out.println("判断：" + NetUtil.isInRange(source_ip, query_ip, query_ip_mask));
 
         InetAddress query_host = InetAddress.getByName(query_ip);
         InetAddress source_host = InetAddress.getByName(source_ip);
